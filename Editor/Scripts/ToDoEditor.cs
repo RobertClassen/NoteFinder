@@ -1,183 +1,189 @@
-﻿namespace Todo.Editor
+﻿namespace Todo
 {
+	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
-	using Todo.Utils;
 	using UnityEditor;
+	using UnityEditorInternal;
 	using UnityEngine;
 
 	public class ToDoEditor : EditorWindow
 	{
-		private FileSystemWatcher _watcher;
-		private FileInfo[] _files;
-		private TodoData _data;
+		#region Fields
+		private FileSystemWatcher watcher = null;
+		private FileInfo[] fileInfos = null;
+		private TodoData noteList = null;
 
-		private string _searchString = "";
+		private string searchString = string.Empty;
 
+		private string newTagName = string.Empty;
+
+		private Vector2 sidebarScroll = Vector2.zero;
+		private Vector2 mainAreaScroll = Vector2.zero;
+
+		private int currentTag = -1;
+		private TodoEntry[] entriesToShow = null;
+		#endregion
+
+		#region Properties
 		public string SearchString
 		{
-			get { return _searchString; }
+			get { return searchString; }
 			set
 			{
-				if(value != _searchString)
+				if(value != searchString)
 				{
-					_searchString = value;
+					searchString = value;
 					RefreshEntriesToShow();
 				}
 			}
 		}
 
-		private string _newTagName = "";
-
-		private Vector2 _sidebarScroll;
-		private Vector2 _mainAreaScroll;
-
-		private int _currentTag = -1;
-		private TodoEntry[] _entriesToShow;
-
 		private float SidebarWidth
-		{
-			get { return position.width / 3f; }
-		}
+		{ get { return position.width / 3f; } }
+		#endregion
 
-		private string[] Tags
-		{
-			get
-			{
-				if(_data != null && _data.TagsList.Count > 0)
-					return _data.TagsList.ToArray();
-				else
-					return new string[] { "TODO", "BUG" };
-			}
-		}
-
-		[MenuItem("Tools/ToDo Manager")]
+		#region Constructors
+		[MenuItem("Tools/TODO Manager")]
 		public static void Init()
 		{
-			var window = GetWindow<ToDoEditor>();
+			ToDoEditor window = GetWindow<ToDoEditor>("//TODO");
 			window.minSize = new Vector2(400, 250);
-			window.titleContent = new GUIContent("Todo");
 			window.Show();
 		}
+		#endregion
 
-		private void OnEnable()
+		#region Methods
+		void OnEnable()
 		{
 			if(EditorApplication.isPlayingOrWillChangePlaymode)
+			{
 				return;
+			}
 
 			RefreshFiles();
 
 			TodoData[] noteLists = Resources.FindObjectsOfTypeAll<TodoData>();
 			if(noteLists != null && noteLists.Length > 0)
 			{
-				_data = noteLists[0];
+				noteList = noteLists[0];
 			}
 			RefreshEntriesToShow();
 
-			_watcher = new FileSystemWatcher(Application.dataPath, "*.cs");
-			_watcher.Changed += OnChanged;
-			_watcher.Deleted += OnDeleted;
-			_watcher.Renamed += OnRenamed;
-			_watcher.Created += OnCreated;
+			watcher = new FileSystemWatcher(Application.dataPath, "*.cs");
+			watcher.Created += OnCreated;
+			watcher.Changed += OnChanged;
+			watcher.Renamed += OnRenamed;
+			watcher.Deleted += OnDeleted;
 
-			_watcher.EnableRaisingEvents = true;
-			_watcher.IncludeSubdirectories = true;
+			watcher.EnableRaisingEvents = true;
+			watcher.IncludeSubdirectories = true;
 		}
 
-		private void OnGUI()
+		void OnGUI()
 		{
-			if(_data == null)
+			if(noteList == null)
 			{
 				GUILayout.Label("No data loaded", EditorStyles.centeredGreyMiniLabel);
 				return;
 			}
 
-			Undo.RecordObject(_data, "tododata");
+			Undo.RecordObject(noteList, "tododata");
 
-			Toolbar();
-			using(new HorizontalBlock())
+			DrawToolbar();
+			using(new GUILayout.HorizontalScope())
 			{
-				Sidebar();
-				MainArea();
+				DrawSidebar();
+				DrawMainArea();
 			}
 
-			EditorUtility.SetDirty(_data);
+			EditorUtility.SetDirty(noteList);
 		}
 
 		#region GUI
-		private void Toolbar()
+		private void DrawToolbar()
 		{
-			using(new HorizontalBlock(EditorStyles.toolbar))
+			using(new GUILayout.HorizontalScope(EditorStyles.toolbar))
 			{
-				GUILayout.Label("ToDo");
-				if(GUILayout.Button("Force scan", EditorStyles.toolbarButton))
+				if(GUILayout.Button("Scan", EditorStyles.toolbarButton))
+				{
 					ScanAllFiles();
+				}
 				GUILayout.FlexibleSpace();
-				SearchString = SearchField(SearchString, GUILayout.Width(250));
+				SearchString = DrawSearchField(SearchString);
 			}
 		}
 
-		private void Sidebar()
+		private void DrawSidebar()
 		{
-			using(new VerticalBlock(GUI.skin.box, GUILayout.Width(SidebarWidth), GUILayout.ExpandHeight(true)))
+			using(new GUILayout.VerticalScope(GUI.skin.box, GUILayout.Width(SidebarWidth), GUILayout.ExpandHeight(true)))
 			{
-				using(new ScrollviewBlock(ref _sidebarScroll))
+				using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(sidebarScroll))
 				{
-					TagField(-1);
-					for(var i = 0; i < _data.TagsCount; i++)
-						TagField(i);
+					sidebarScroll = scrollViewScrope.scrollPosition;
+					DrawTagField(-1);
+					for(int i = 0; i < noteList.Tags.Count; i++)
+					{
+						DrawTagField(i);
+					}
 				}
 				AddTagField();
 			}
 		}
 
-		private void MainArea()
+		private void DrawMainArea()
 		{
-			using(new VerticalBlock(GUI.skin.box, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true)))
+			using(new GUILayout.VerticalScope(GUI.skin.box, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true)))
 			{
-				using(new ScrollviewBlock(ref _mainAreaScroll))
-					for(var i = 0; i < _entriesToShow.Length; i++)
+				using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(mainAreaScroll))
+				{
+					sidebarScroll = scrollViewScrope.scrollPosition;
+					for(int i = 0; i < entriesToShow.Length; i++)
+					{
 						EntryField(i);
+					}
+				}
 			}
 		}
 
-		private void TagField(int index)
+		private void DrawTagField(int index)
 		{
 			Event e = Event.current;
-			var tag = index == -1 ? "ALL" : _data.TagsList[index];
-			using(new HorizontalBlock(EditorStyles.helpBox))
+			string tag = index == -1 ? "ALL" : noteList.Tags[index];
+			using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
 			{
-				using(new ColoredBlock(index == _currentTag ? Color.green : Color.white))
-				{
-					GUILayout.Label(tag);
-					GUILayout.FlexibleSpace();
-					GUILayout.Label("(" + _data.GetCountByTag(index) + ")");
-				}
+				GUILayout.Label(tag);
+				GUILayout.FlexibleSpace();
+				GUILayout.Label(string.Format("({0})", noteList.GetCountByTag(index)));
 				if(index != -1 && index != 0 && index != 1)
 				{
-					if(GUILayout.Button("x", EditorStyles.miniButton))
+					if(GUILayout.Button("-", EditorStyles.miniButton))
+					{
 						EditorApplication.delayCall += () =>
 						{
-							_data.RemoveTag(index);
+							noteList.RemoveTag(index);
 							Repaint();
 						};
+					}
 				}
 			}
-			var rect = GUILayoutUtility.GetLastRect();
-			if(e.isMouse && e.type == EventType.MouseDown && rect.Contains(e.mousePosition))
+			if(e.isMouse && e.type == EventType.MouseDown && GUILayoutUtility.GetLastRect().Contains(e.mousePosition))
+			{
 				SetCurrentTag(index);
+			}
 		}
 
 		private void AddTagField()
 		{
-			using(new HorizontalBlock(EditorStyles.helpBox))
+			using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
 			{
-				_newTagName = EditorGUILayout.TextField(_newTagName);
+				newTagName = EditorGUILayout.TextField(newTagName);
 				if(GUILayout.Button("Add", EditorStyles.miniButton, GUILayout.ExpandWidth(false)))
 				{
-					_data.AddTag(_newTagName);
-					_newTagName = "";
+					noteList.AddTag(newTagName);
+					newTagName = "";
 					GUI.FocusControl(null);
 				}
 			}
@@ -185,10 +191,10 @@
 
 		private void EntryField(int index)
 		{
-			var entry = _entriesToShow[index];
-			using(new VerticalBlock(EditorStyles.helpBox))
+			TodoEntry entry = entriesToShow[index];
+			using(new GUILayout.VerticalScope(EditorStyles.helpBox))
 			{
-				using(new HorizontalBlock())
+				using(new GUILayout.HorizontalScope())
 				{
 					GUILayout.Label(entry.Tag, EditorStyles.boldLabel);
 					GUILayout.FlexibleSpace();
@@ -198,34 +204,38 @@
 				GUILayout.Label(entry.Text, EditorStyles.largeLabel);
 			}
 			Event e = Event.current;
-			var rect = GUILayoutUtility.GetLastRect();
+			Rect rect = GUILayoutUtility.GetLastRect();
 			if(e.isMouse && e.type == EventType.MouseDown && rect.Contains(e.mousePosition) && e.clickCount == 2)
-				EditorApplication.delayCall += () =>
-				{
-					UnityEditorInternal.InternalEditorUtility.OpenFileAtLineExternal(entry.File, entry.Line);
-				};
+			{
+				OpenScript(entry);
+			}
+		}
+
+		private static void OpenScript(TodoEntry entry)
+		{
+			EditorApplication.delayCall += () => InternalEditorUtility.OpenFileAtLineExternal(entry.File, entry.Line);
 		}
 		#endregion
 
 		#region Files envents handlers
+		private void OnCreated(object obj, FileSystemEventArgs e)
+		{
+			EditorApplication.delayCall += () => ScanFile(e.FullPath);
+		}
+
 		private void OnChanged(object obj, FileSystemEventArgs e)
 		{
 			EditorApplication.delayCall += () => ScanFile(e.FullPath);
 		}
 
-		private void OnCreated(object obj, FileSystemEventArgs e)
+		private void OnRenamed(object obj, FileSystemEventArgs e)
 		{
 			EditorApplication.delayCall += () => ScanFile(e.FullPath);
 		}
 
 		private void OnDeleted(object obj, FileSystemEventArgs e)
 		{
-			EditorApplication.delayCall += () => _data.Entries.RemoveAll(en => en.File == e.FullPath);
-		}
-
-		private void OnRenamed(object obj, FileSystemEventArgs e)
-		{
-			EditorApplication.delayCall += () => ScanFile(e.FullPath);
+			EditorApplication.delayCall += () => noteList.Entries.RemoveAll(en => en.File == e.FullPath);
 		}
 		#endregion
 
@@ -233,7 +243,7 @@
 		private void ScanAllFiles()
 		{
 			RefreshFiles();
-			foreach(var file in _files.Where(file => file.Exists))
+			foreach(FileInfo file in fileInfos.Where(file => file.Exists))
 			{
 				ScanFile(file.FullName);
 			}
@@ -241,42 +251,45 @@
 
 		private void ScanFile(string filePath)
 		{
-			var file = new FileInfo(filePath);
+			FileInfo file = new FileInfo(filePath);
 			if(!file.Exists)
+			{
 				return;
+			}
 
-			var entries = new List<TodoEntry>();
-			_data.Entries.RemoveAll(e => e.File == filePath);
+			List<TodoEntry> entries = new List<TodoEntry>();
+			noteList.Entries.RemoveAll(e => e.File == filePath);
 
-			var parser = new ScriptsParser(filePath, Tags);
+			ScriptsParser parser = new ScriptsParser(filePath, noteList != null && noteList.Tags.Count > 0 ? 
+				noteList.Tags.ToArray() : new[] { "TODO", "BUG" });
 
 			entries.AddRange(parser.Parse());
-			var temp = entries.Except(_data.Entries);
-			_data.Entries.AddRange(temp);
+			noteList.Entries.AddRange(entries.Except(noteList.Entries));
 		}
 
 		private void RefreshFiles()
 		{
-			var assetsDir = new DirectoryInfo(Application.dataPath);
-
-			_files =
-                assetsDir.GetFiles("*.cs", SearchOption.AllDirectories)
-                    .Concat(assetsDir.GetFiles("*.js", SearchOption.AllDirectories))
-                    .ToArray();
+			DirectoryInfo assetsDir = new DirectoryInfo(Application.dataPath);
+			fileInfos = assetsDir.GetFiles("*.cs", SearchOption.AllDirectories)
+				.Concat(assetsDir.GetFiles("*.js", SearchOption.AllDirectories))
+				.ToArray();
 		}
 		#endregion
 
 		#region UI helpers
 		private void RefreshEntriesToShow()
 		{
-			if(_currentTag == -1)
-				_entriesToShow = _data.Entries.ToArray();
-			else if(_currentTag >= 0)
-				_entriesToShow = _data.Entries.Where(e => e.Tag == _data.TagsList[_currentTag]).ToArray();
+			if(currentTag == -1)
+			{
+				entriesToShow = noteList.Entries.ToArray();
+			}
+			else if(currentTag >= 0)
+			{
+				entriesToShow = noteList.Entries.Where(e => e.Tag == noteList.Tags[currentTag]).ToArray();
+			}
 			if(!string.IsNullOrEmpty(SearchString))
 			{
-				var etmp = _entriesToShow;
-				_entriesToShow = etmp.Where(e => e.Text.Contains(_searchString)).ToArray();
+				entriesToShow = entriesToShow.Where(e => e.Text.Contains(searchString)).ToArray();
 			}
 		}
 
@@ -284,7 +297,7 @@
 		{
 			EditorApplication.delayCall += () =>
 			{
-				_currentTag = index;
+				currentTag = index;
 				RefreshEntriesToShow();
 				Repaint();
 			};
@@ -292,23 +305,26 @@
 
 		public static string AssetsRelativePath(string absolutePath)
 		{
-			if(absolutePath.StartsWith(Application.dataPath))
-				return "Assets" + absolutePath.Substring(Application.dataPath.Length);
-			else
-				throw new System.ArgumentException("Full path does not contain the current project's Assets folder",
-					"absolutePath");
+			if(!absolutePath.StartsWith(Application.dataPath))
+			{
+				throw new ArgumentException("Full path does not contain the current project's Assets folder", "absolutePath");
+			}
+			return "Assets" + absolutePath.Substring(Application.dataPath.Length);
 		}
 
-		private string SearchField(string searchStr, params GUILayoutOption[] options)
+		private string DrawSearchField(string searchString)
 		{
-			searchStr = GUILayout.TextField(searchStr, "ToolbarSeachTextField", options);
-			if(GUILayout.Button("", "ToolbarSeachCancelButton"))
+			searchString = GUILayout.TextField(searchString, EditorStyles.toolbarSearchField, GUILayout.Width(250));
+			if(GUILayout.Button(string.Empty, string.IsNullOrEmpty(searchString) ? 
+				"ToolbarSeachCancelButtonEmpty" : "ToolbarSeachCancelButton"))
 			{
-				searchStr = "";
+				searchString = string.Empty;
 				GUI.FocusControl(null);
 			}
-			return searchStr;
+			return searchString;
 		}
+		#endregion
+
 		#endregion
 	}
 }

@@ -1,34 +1,32 @@
 ﻿namespace Todo
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
 	using UnityEngine;
 
-	[CreateAssetMenu(menuName = "ToDo Manager/NoteList")]
+	[CreateAssetMenu(menuName = "TODO Manager/NoteList")]
 	[Serializable]
 	public class TodoData : ScriptableObject
 	{
+		#region Fields
 		public List<TodoEntry> Entries = new List<TodoEntry>();
+		public List<string> Tags = new List<string> { "TODO", "BUG" };
+		#endregion
 
-		public List<string> TagsList = new List<string>() {
-			"TODO",
-			"BUG"
-		};
+		#region Properties
 
-		public int EntriesCount
+		#endregion
+
+		#region Constructors
+
+		#endregion
+
+		#region Methods
+		public int GetCountByTag(int tagIndex)
 		{
-			get { return Entries.Count; }
-		}
-
-		public int TagsCount
-		{
-			get { return TagsList.Count; }
-		}
-
-		public int GetCountByTag(int tag)
-		{
-			return tag != -1 ? Entries.Count(e => e.Tag == TagsList[tag]) : EntriesCount;
+			return tagIndex == -1 ? Entries.Count : Entries.Count(entry => entry.Tag == Tags[tagIndex]);
 		}
 
 		public TodoEntry GetEntryAt(int index)
@@ -38,15 +36,20 @@
 
 		public void AddTag(string tag)
 		{
-			if(TagsList.Contains(tag) || string.IsNullOrEmpty(tag))
+			if(Tags.Contains(tag) || string.IsNullOrEmpty(tag))
+			{
 				return;
-			TagsList.Add(tag);
+			}
+			Tags.Add(tag);
 		}
 
 		public void RemoveTag(int index)
 		{
-			if(TagsList.Count >= (index + 1))
-				TagsList.RemoveAt(index);
+			if(Tags.Count >= (index + 1))
+			{
+				Tags.RemoveAt(index);
+			}
 		}
+		#endregion
 	}
 }
