@@ -3,6 +3,9 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.IO;
+	using System.Linq;
+	using System.Text.RegularExpressions;
 	using UnityEngine;
 
 	[Serializable]
@@ -11,7 +14,7 @@
 		#region Fields
 		public string Text = null;
 		public string Tag = null;
-		public string File = null;
+		public string FilePath = null;
 		public int Line = 0;
 
 		public string PathToShow = null;
@@ -22,44 +25,56 @@
 		#endregion
 
 		#region Constructors
-		public Note(string text, string tag, string file, int line)
+		private Note(string text, string tag, string filePath, int line)
 		{
 			Text = text;
 			Tag = tag;
-			File = file;
+			FilePath = filePath;
 			Line = line;
 
-			PathToShow = string.Format("{0}({1})", File.Remove(0, Application.dataPath.Length - 6).Replace("\\", "/"), Line);
+			PathToShow = string.Format("{0}({1})", FilePath.Remove(0, Application.dataPath.Length - 6).Replace("\\", "/"), Line);
 		}
 		#endregion
 
 		#region Methods
+		public static Note[] Parse(string filePath, List<string> tags)
+		{
+			if(!File.Exists(filePath))
+			{
+				return null;
+			}
+
+			string text = File.ReadAllText(filePath);
+			List<Note> entries = new List<Note>();
+			for(int i = 0; i < tags.Count; i++)
+			{
+				entries.AddRange(Regex.Matches(text, string.Format(@"(?<=\W|^)//(\s?{0})(.*)", tags[i]))
+					.Cast<Match>()
+					.Select(match => new Note(match.Groups[2].Value, tags[i], filePath, GetLine(text, match.Index))));
+			}
+			return entries.ToArray();
+		}
+
+		private static int GetLine(string text, int index)
+		{
+			return text.Take(index).Count(c => c == '\n') + 1;
+		}
+
 		public override bool Equals(object obj)
 		{
-			Note x = this;
-			Note y = (Note)obj;
-			if(ReferenceEquals(x, y))
-			{
-				return true;
-			}
-			if(ReferenceEquals(x, null) || ReferenceEquals(y, null) || x.GetType() != y.GetType())
-			{
-				return false;
-			}
-			return string.Equals(x.Text, y.Text) && string.Equals(x.Tag, y.Tag) && string.Equals(x.File, y.File) && x.Line == y.Line;
+			Note other = obj as Note;
+			return ReferenceEquals(this, other) ||
+			!ReferenceEquals(this, null) && !ReferenceEquals(other, null) && GetType() == other.GetType() &&
+			Text == other.Text && Tag == other.Tag && FilePath == other.FilePath && Line == other.Line;
 		}
 
 		public override int GetHashCode()
 		{
-			unchecked
-			{
-				var obj = this;
-				var hashCode = (obj.Text != null ? obj.Text.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (obj.Tag != null ? obj.Tag.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (obj.File != null ? obj.File.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ obj.Line;
-				return hashCode;
-			}
+			int hashCode = (Text != null ? Text.GetHashCode() : 0);
+			hashCode = (hashCode * 397) ^ (Tag != null ? Tag.GetHashCode() : 0);
+			hashCode = (hashCode * 397) ^ (FilePath != null ? FilePath.GetHashCode() : 0);
+			hashCode = (hashCode * 397) ^ Line;
+			return hashCode;
 		}
 		#endregion
 	}

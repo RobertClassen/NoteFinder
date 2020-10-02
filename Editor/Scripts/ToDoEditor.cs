@@ -11,6 +11,10 @@
 
 	public class ToDoEditor : EditorWindow
 	{
+		#region Constants
+		private const float sidebarWidth = 150f;
+		#endregion
+
 		#region Fields
 		private FileSystemWatcher watcher = null;
 		private FileInfo[] fileInfos = null;
@@ -20,8 +24,8 @@
 
 		private string newTagName = string.Empty;
 
-		private Vector2 sidebarScroll = Vector2.zero;
-		private Vector2 mainAreaScroll = Vector2.zero;
+		private Vector2 sidebarScrollPosition = Vector2.zero;
+		private Vector2 mainAreaScrollPosition = Vector2.zero;
 
 		private int currentTag = -1;
 		private Note[] entriesToShow = null;
@@ -40,9 +44,6 @@
 				}
 			}
 		}
-
-		private float SidebarWidth
-		{ get { return position.width / 3f; } }
 		#endregion
 
 		#region Constructors
@@ -118,11 +119,11 @@
 
 		private void DrawSidebar()
 		{
-			using(new GUILayout.VerticalScope(GUI.skin.box, GUILayout.Width(SidebarWidth), GUILayout.ExpandHeight(true)))
+			using(new GUILayout.VerticalScope(GUI.skin.box, GUILayout.Width(sidebarWidth), GUILayout.ExpandHeight(true)))
 			{
-				using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(sidebarScroll))
+				using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(sidebarScrollPosition))
 				{
-					sidebarScroll = scrollViewScrope.scrollPosition;
+					sidebarScrollPosition = scrollViewScrope.scrollPosition;
 					DrawTagField(-1);
 					for(int i = 0; i < noteList.Tags.Count; i++)
 					{
@@ -137,9 +138,9 @@
 		{
 			using(new GUILayout.VerticalScope(GUI.skin.box, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true)))
 			{
-				using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(mainAreaScroll))
+				using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(mainAreaScrollPosition))
 				{
-					sidebarScroll = scrollViewScrope.scrollPosition;
+					mainAreaScrollPosition = scrollViewScrope.scrollPosition;
 					for(int i = 0; i < entriesToShow.Length; i++)
 					{
 						EntryField(i);
@@ -213,7 +214,7 @@
 
 		private static void OpenScript(Note entry)
 		{
-			EditorApplication.delayCall += () => InternalEditorUtility.OpenFileAtLineExternal(entry.File, entry.Line);
+			EditorApplication.delayCall += () => InternalEditorUtility.OpenFileAtLineExternal(entry.FilePath, entry.Line);
 		}
 		#endregion
 
@@ -235,7 +236,7 @@
 
 		private void OnDeleted(object obj, FileSystemEventArgs e)
 		{
-			EditorApplication.delayCall += () => noteList.Notes.RemoveAll(en => en.File == e.FullPath);
+			EditorApplication.delayCall += () => noteList.Notes.RemoveAll(en => en.FilePath == e.FullPath);
 		}
 		#endregion
 
@@ -257,14 +258,11 @@
 				return;
 			}
 
-			List<Note> entries = new List<Note>();
-			noteList.Notes.RemoveAll(e => e.File == filePath);
+			List<Note> notes = new List<Note>();
+			noteList.Notes.RemoveAll(e => e.FilePath == filePath);
 
-			ScriptsParser parser = new ScriptsParser(filePath, noteList != null && noteList.Tags.Count > 0 ? 
-				noteList.Tags.ToArray() : new[] { "TODO", "BUG" });
-
-			entries.AddRange(parser.Parse());
-			noteList.Notes.AddRange(entries.Except(noteList.Notes));
+			notes.AddRange(Note.Parse(filePath, noteList.Tags));
+			noteList.Notes.AddRange(notes.Except(noteList.Notes));
 		}
 
 		private void RefreshFiles()

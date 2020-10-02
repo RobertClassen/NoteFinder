@@ -12,11 +12,13 @@
 	{
 		#region Fields
 		public List<Note> Notes = new List<Note>();
-		public List<string> Tags = new List<string> { "TODO", "BUG" };
+		[SerializeField]
+		public List<string> tags = new List<string> { "TODO", "BUG" };
 		#endregion
 
 		#region Properties
-
+		public List<string> Tags
+		{ get { return tags; } }
 		#endregion
 
 		#region Constructors
