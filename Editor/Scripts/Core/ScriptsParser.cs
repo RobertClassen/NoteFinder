@@ -34,7 +34,7 @@
 		#endregion
 
 		#region Methods
-		public TodoEntry[] Parse()
+		public Note[] Parse()
 		{
 			FileInfo file = new FileInfo(filePath);
 			if(!file.Exists)
@@ -42,12 +42,12 @@
 				return null;
 			}
 
-			List<TodoEntry> entries = new List<TodoEntry>();
+			List<Note> entries = new List<Note>();
 			for(int i = 0; i < tags.Length; i++)
 			{
 				entries.AddRange(Regex.Matches(text, string.Format(@"(?<=\W|^)//(\s?{0})(.*)", tags[i]))
 					.Cast<Match>()
-					.Select(match => new TodoEntry(match.Groups[2].Value, "", tags[i], filePath, GetLine(match.Index))));
+					.Select(match => new Note(match.Groups[2].Value, tags[i], filePath, GetLine(match.Index))));
 			}
 			return entries.ToArray();
 		}

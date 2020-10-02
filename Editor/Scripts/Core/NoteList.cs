@@ -8,10 +8,10 @@
 
 	[CreateAssetMenu(menuName = "TODO Manager/NoteList")]
 	[Serializable]
-	public class TodoData : ScriptableObject
+	public class NoteList : ScriptableObject
 	{
 		#region Fields
-		public List<TodoEntry> Entries = new List<TodoEntry>();
+		public List<Note> Notes = new List<Note>();
 		public List<string> Tags = new List<string> { "TODO", "BUG" };
 		#endregion
 
@@ -26,12 +26,12 @@
 		#region Methods
 		public int GetCountByTag(int tagIndex)
 		{
-			return tagIndex == -1 ? Entries.Count : Entries.Count(entry => entry.Tag == Tags[tagIndex]);
+			return tagIndex == -1 ? Notes.Count : Notes.Count(entry => entry.Tag == Tags[tagIndex]);
 		}
 
-		public TodoEntry GetEntryAt(int index)
+		public Note GetEntryAt(int index)
 		{
-			return Entries[index];
+			return Notes[index];
 		}
 
 		public void AddTag(string tag)

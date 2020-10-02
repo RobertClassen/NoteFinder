@@ -6,11 +6,10 @@
 	using UnityEngine;
 
 	[Serializable]
-	public class TodoEntry
+	public class Note
 	{
 		#region Fields
 		public string Text = null;
-		public string Note = null;
 		public string Tag = null;
 		public string File = null;
 		public int Line = 0;
@@ -23,10 +22,9 @@
 		#endregion
 
 		#region Constructors
-		public TodoEntry(string text, string note, string tag, string file, int line)
+		public Note(string text, string tag, string file, int line)
 		{
 			Text = text;
-			Note = note;
 			Tag = tag;
 			File = file;
 			Line = line;
@@ -38,25 +36,17 @@
 		#region Methods
 		public override bool Equals(object obj)
 		{
-			TodoEntry x = this;
-			TodoEntry y = (TodoEntry)obj;
+			Note x = this;
+			Note y = (Note)obj;
 			if(ReferenceEquals(x, y))
 			{
 				return true;
 			}
-			if(ReferenceEquals(x, null))
+			if(ReferenceEquals(x, null) || ReferenceEquals(y, null) || x.GetType() != y.GetType())
 			{
 				return false;
 			}
-			if(ReferenceEquals(y, null))
-			{
-				return false;
-			}
-			if(x.GetType() != y.GetType())
-			{
-				return false;
-			}
-			return string.Equals(x.Text, y.Text) && string.Equals(x.Note, y.Note) && string.Equals(x.Tag, y.Tag) && string.Equals(x.File, y.File) && x.Line == y.Line;
+			return string.Equals(x.Text, y.Text) && string.Equals(x.Tag, y.Tag) && string.Equals(x.File, y.File) && x.Line == y.Line;
 		}
 
 		public override int GetHashCode()
@@ -65,7 +55,6 @@
 			{
 				var obj = this;
 				var hashCode = (obj.Text != null ? obj.Text.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (obj.Note != null ? obj.Note.GetHashCode() : 0);
 				hashCode = (hashCode * 397) ^ (obj.Tag != null ? obj.Tag.GetHashCode() : 0);
 				hashCode = (hashCode * 397) ^ (obj.File != null ? obj.File.GetHashCode() : 0);
 				hashCode = (hashCode * 397) ^ obj.Line;

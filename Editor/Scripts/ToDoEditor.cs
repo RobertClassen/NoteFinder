@@ -14,7 +14,7 @@
 		#region Fields
 		private FileSystemWatcher watcher = null;
 		private FileInfo[] fileInfos = null;
-		private TodoData noteList = null;
+		private NoteList noteList = null;
 
 		private string searchString = string.Empty;
 
@@ -24,7 +24,7 @@
 		private Vector2 mainAreaScroll = Vector2.zero;
 
 		private int currentTag = -1;
-		private TodoEntry[] entriesToShow = null;
+		private Note[] entriesToShow = null;
 		#endregion
 
 		#region Properties
@@ -65,7 +65,7 @@
 
 			RefreshFiles();
 
-			TodoData[] noteLists = Resources.FindObjectsOfTypeAll<TodoData>();
+			NoteList[] noteLists = Resources.FindObjectsOfTypeAll<NoteList>();
 			if(noteLists != null && noteLists.Length > 0)
 			{
 				noteList = noteLists[0];
@@ -191,7 +191,7 @@
 
 		private void EntryField(int index)
 		{
-			TodoEntry entry = entriesToShow[index];
+			Note entry = entriesToShow[index];
 			using(new GUILayout.VerticalScope(EditorStyles.helpBox))
 			{
 				using(new GUILayout.HorizontalScope())
@@ -211,7 +211,7 @@
 			}
 		}
 
-		private static void OpenScript(TodoEntry entry)
+		private static void OpenScript(Note entry)
 		{
 			EditorApplication.delayCall += () => InternalEditorUtility.OpenFileAtLineExternal(entry.File, entry.Line);
 		}
@@ -235,7 +235,7 @@
 
 		private void OnDeleted(object obj, FileSystemEventArgs e)
 		{
-			EditorApplication.delayCall += () => noteList.Entries.RemoveAll(en => en.File == e.FullPath);
+			EditorApplication.delayCall += () => noteList.Notes.RemoveAll(en => en.File == e.FullPath);
 		}
 		#endregion
 
@@ -257,14 +257,14 @@
 				return;
 			}
 
-			List<TodoEntry> entries = new List<TodoEntry>();
-			noteList.Entries.RemoveAll(e => e.File == filePath);
+			List<Note> entries = new List<Note>();
+			noteList.Notes.RemoveAll(e => e.File == filePath);
 
 			ScriptsParser parser = new ScriptsParser(filePath, noteList != null && noteList.Tags.Count > 0 ? 
 				noteList.Tags.ToArray() : new[] { "TODO", "BUG" });
 
 			entries.AddRange(parser.Parse());
-			noteList.Entries.AddRange(entries.Except(noteList.Entries));
+			noteList.Notes.AddRange(entries.Except(noteList.Notes));
 		}
 
 		private void RefreshFiles()
@@ -281,11 +281,11 @@
 		{
 			if(currentTag == -1)
 			{
-				entriesToShow = noteList.Entries.ToArray();
+				entriesToShow = noteList.Notes.ToArray();
 			}
 			else if(currentTag >= 0)
 			{
-				entriesToShow = noteList.Entries.Where(e => e.Tag == noteList.Tags[currentTag]).ToArray();
+				entriesToShow = noteList.Notes.Where(e => e.Tag == noteList.Tags[currentTag]).ToArray();
 			}
 			if(!string.IsNullOrEmpty(SearchString))
 			{
