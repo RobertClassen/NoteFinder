@@ -12,6 +12,7 @@
 	public class ToDoEditor : EditorWindow
 	{
 		#region Constants
+		private const string fileExtension = "*.cs";
 		private const float sidebarWidth = 150f;
 		#endregion
 
@@ -73,7 +74,7 @@
 			}
 			RefreshEntriesToShow();
 
-			watcher = new FileSystemWatcher(Application.dataPath, "*.cs");
+			watcher = new FileSystemWatcher(Application.dataPath, fileExtension);
 			watcher.Created += OnCreated;
 			watcher.Changed += OnChanged;
 			watcher.Renamed += OnRenamed;
@@ -268,9 +269,7 @@
 		private void RefreshFiles()
 		{
 			DirectoryInfo assetsDir = new DirectoryInfo(Application.dataPath);
-			fileInfos = assetsDir.GetFiles("*.cs", SearchOption.AllDirectories)
-				.Concat(assetsDir.GetFiles("*.js", SearchOption.AllDirectories))
-				.ToArray();
+			fileInfos = assetsDir.GetFiles(fileExtension, SearchOption.AllDirectories).ToArray();
 		}
 		#endregion
 
