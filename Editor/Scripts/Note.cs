@@ -6,6 +6,8 @@
 	using System.IO;
 	using System.Linq;
 	using System.Text.RegularExpressions;
+	using UnityEditor;
+	using UnityEditorInternal;
 	using UnityEngine;
 
 	[Serializable]
@@ -48,9 +50,9 @@
 			List<Note> entries = new List<Note>();
 			for(int i = 0; i < tags.Count; i++)
 			{
-				entries.AddRange(Regex.Matches(text, string.Format(@"(?<=\W|^)//(\s?{0})(.*)", tags[i]))
+				entries.AddRange(Regex.Matches(text, string.Format(@"(?<=\W|^)\/\/(\s?(?i){0}(?-i))(:?)(.*)", tags[i]))
 					.Cast<Match>()
-					.Select(match => new Note(match.Groups[2].Value, tags[i], filePath, GetLine(text, match.Index))));
+					.Select(match => new Note(match.Groups[3].Value.Trim(), tags[i], filePath, GetLine(text, match.Index))));
 			}
 			return entries.ToArray();
 		}
@@ -58,6 +60,37 @@
 		private static int GetLine(string text, int index)
 		{
 			return text.Take(index).Count(c => c == '\n') + 1;
+		}
+
+		public void Draw()
+		{
+			using(new GUILayout.VerticalScope(EditorStyles.helpBox))
+			{
+				using(new GUILayout.HorizontalScope())
+				{
+					GUILayout.Label(Tag, EditorStyles.boldLabel);
+					GUILayout.FlexibleSpace();
+					GUILayout.Label(PathToShow, EditorStyles.miniBoldLabel);
+				}
+				//GUILayout.Space(5f);
+				GUIStyle textStyle = new GUIStyle(EditorStyles.largeLabel){ wordWrap = true };
+				GUILayout.Label(Text, textStyle);
+			}
+			Event e = Event.current;
+			Rect rect = GUILayoutUtility.GetLastRect();
+			if(rect.Contains(e.mousePosition))
+			{
+				EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
+				if(e.isMouse && e.type == EventType.MouseDown /*&& e.clickCount == 2*/)
+				{
+					OpenScript();
+				}
+			}
+		}
+
+		private void OpenScript()
+		{
+			EditorApplication.delayCall += () => InternalEditorUtility.OpenFileAtLineExternal(FilePath, Line);
 		}
 
 		public override bool Equals(object obj)

@@ -6,10 +6,9 @@
 	using System.IO;
 	using System.Linq;
 	using UnityEditor;
-	using UnityEditorInternal;
 	using UnityEngine;
 
-	public class ToDoEditor : EditorWindow
+	public class ToDoManager : EditorWindow
 	{
 		#region Constants
 		private const string fileExtension = "*.cs";
@@ -17,8 +16,8 @@
 		#endregion
 
 		#region Fields
+		private DirectoryInfo directory = null;
 		private FileSystemWatcher watcher = null;
-		private FileInfo[] fileInfos = null;
 		private NoteList noteList = null;
 
 		private string searchString = string.Empty;
@@ -26,10 +25,6 @@
 		private string newTagName = string.Empty;
 
 		private Vector2 sidebarScrollPosition = Vector2.zero;
-		private Vector2 mainAreaScrollPosition = Vector2.zero;
-
-		private int currentTag = -1;
-		private Note[] entriesToShow = null;
 		#endregion
 
 		#region Properties
@@ -41,7 +36,6 @@
 				if(value != searchString)
 				{
 					searchString = value;
-					RefreshEntriesToShow();
 				}
 			}
 		}
@@ -49,10 +43,11 @@
 
 		#region Constructors
 		[MenuItem("Tools/TODO Manager")]
-		public static void Init()
+		public static void OpenWindow()
 		{
-			ToDoEditor window = GetWindow<ToDoEditor>("//TODO");
+			ToDoManager window = GetWindow<ToDoManager>("//TODO");
 			window.minSize = new Vector2(400, 250);
+			window.wantsMouseMove = true;
 			window.Show();
 		}
 		#endregion
@@ -60,19 +55,28 @@
 		#region Methods
 		void OnEnable()
 		{
-			if(EditorApplication.isPlayingOrWillChangePlaymode)
+			Initialize();
+		}
+
+		void OnGUI()
+		{
+			Draw();
+
+			if(Event.current.type == EventType.MouseMove)
 			{
-				return;
+				Repaint();
 			}
+		}
 
-			RefreshFiles();
-
+		private void Initialize()
+		{
 			NoteList[] noteLists = Resources.FindObjectsOfTypeAll<NoteList>();
 			if(noteLists != null && noteLists.Length > 0)
 			{
 				noteList = noteLists[0];
 			}
-			RefreshEntriesToShow();
+			
+			directory = new DirectoryInfo(Application.dataPath);
 
 			watcher = new FileSystemWatcher(Application.dataPath, fileExtension);
 			watcher.Created += OnCreated;
@@ -82,9 +86,31 @@
 
 			watcher.EnableRaisingEvents = true;
 			watcher.IncludeSubdirectories = true;
+
+			ScanAllFiles();
 		}
 
-		void OnGUI()
+		private void OnCreated(object obj, FileSystemEventArgs e)
+		{
+			EditorApplication.delayCall += () => ScanFile(e.FullPath);
+		}
+
+		private void OnChanged(object obj, FileSystemEventArgs e)
+		{
+			EditorApplication.delayCall += () => ScanFile(e.FullPath);
+		}
+
+		private void OnRenamed(object obj, FileSystemEventArgs e)
+		{
+			EditorApplication.delayCall += () => ScanFile(e.FullPath);
+		}
+
+		private void OnDeleted(object obj, FileSystemEventArgs e)
+		{
+			EditorApplication.delayCall += () => noteList.Notes.RemoveAll(note => note.FilePath == e.FullPath);
+		}
+
+		private void Draw()
 		{
 			if(noteList == null)
 			{
@@ -97,14 +123,14 @@
 			DrawToolbar();
 			using(new GUILayout.HorizontalScope())
 			{
-				DrawSidebar();
-				DrawMainArea();
+				DrawSideBar();
+				//TODO: use tag instead SearchString
+				noteList.Draw(SearchString);
 			}
 
 			EditorUtility.SetDirty(noteList);
 		}
 
-		#region GUI
 		private void DrawToolbar()
 		{
 			using(new GUILayout.HorizontalScope(EditorStyles.toolbar))
@@ -118,7 +144,7 @@
 			}
 		}
 
-		private void DrawSidebar()
+		private void DrawSideBar()
 		{
 			using(new GUILayout.VerticalScope(GUI.skin.box, GUILayout.Width(sidebarWidth), GUILayout.ExpandHeight(true)))
 			{
@@ -135,24 +161,8 @@
 			}
 		}
 
-		private void DrawMainArea()
-		{
-			using(new GUILayout.VerticalScope(GUI.skin.box, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true)))
-			{
-				using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(mainAreaScrollPosition))
-				{
-					mainAreaScrollPosition = scrollViewScrope.scrollPosition;
-					for(int i = 0; i < entriesToShow.Length; i++)
-					{
-						EntryField(i);
-					}
-				}
-			}
-		}
-
 		private void DrawTagField(int index)
 		{
-			Event e = Event.current;
 			string tag = index == -1 ? "ALL" : noteList.Tags[index];
 			using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
 			{
@@ -171,9 +181,10 @@
 					}
 				}
 			}
+			Event e = Event.current;
 			if(e.isMouse && e.type == EventType.MouseDown && GUILayoutUtility.GetLastRect().Contains(e.mousePosition))
 			{
-				SetCurrentTag(index);
+				SetCurrentTag();
 			}
 		}
 
@@ -191,61 +202,9 @@
 			}
 		}
 
-		private void EntryField(int index)
-		{
-			Note entry = entriesToShow[index];
-			using(new GUILayout.VerticalScope(EditorStyles.helpBox))
-			{
-				using(new GUILayout.HorizontalScope())
-				{
-					GUILayout.Label(entry.Tag, EditorStyles.boldLabel);
-					GUILayout.FlexibleSpace();
-					GUILayout.Label(entry.PathToShow, EditorStyles.miniBoldLabel);
-				}
-				GUILayout.Space(5f);
-				GUILayout.Label(entry.Text, EditorStyles.largeLabel);
-			}
-			Event e = Event.current;
-			Rect rect = GUILayoutUtility.GetLastRect();
-			if(e.isMouse && e.type == EventType.MouseDown && rect.Contains(e.mousePosition) && e.clickCount == 2)
-			{
-				OpenScript(entry);
-			}
-		}
-
-		private static void OpenScript(Note entry)
-		{
-			EditorApplication.delayCall += () => InternalEditorUtility.OpenFileAtLineExternal(entry.FilePath, entry.Line);
-		}
-		#endregion
-
-		#region Files envents handlers
-		private void OnCreated(object obj, FileSystemEventArgs e)
-		{
-			EditorApplication.delayCall += () => ScanFile(e.FullPath);
-		}
-
-		private void OnChanged(object obj, FileSystemEventArgs e)
-		{
-			EditorApplication.delayCall += () => ScanFile(e.FullPath);
-		}
-
-		private void OnRenamed(object obj, FileSystemEventArgs e)
-		{
-			EditorApplication.delayCall += () => ScanFile(e.FullPath);
-		}
-
-		private void OnDeleted(object obj, FileSystemEventArgs e)
-		{
-			EditorApplication.delayCall += () => noteList.Notes.RemoveAll(en => en.FilePath == e.FullPath);
-		}
-		#endregion
-
-		#region Files Helpers
 		private void ScanAllFiles()
 		{
-			RefreshFiles();
-			foreach(FileInfo file in fileInfos.Where(file => file.Exists))
+			foreach(FileInfo file in directory.GetFiles(fileExtension, SearchOption.AllDirectories))
 			{
 				ScanFile(file.FullName);
 			}
@@ -259,54 +218,13 @@
 				return;
 			}
 
-			List<Note> notes = new List<Note>();
-			noteList.Notes.RemoveAll(e => e.FilePath == filePath);
-
-			notes.AddRange(Note.Parse(filePath, noteList.Tags));
-			noteList.Notes.AddRange(notes.Except(noteList.Notes));
+			noteList.Notes.RemoveAll(note => note.FilePath == filePath);
+			noteList.Notes.AddRange(Note.Parse(filePath, noteList.Tags));
 		}
 
-		private void RefreshFiles()
+		private void SetCurrentTag()
 		{
-			DirectoryInfo assetsDir = new DirectoryInfo(Application.dataPath);
-			fileInfos = assetsDir.GetFiles(fileExtension, SearchOption.AllDirectories).ToArray();
-		}
-		#endregion
-
-		#region UI helpers
-		private void RefreshEntriesToShow()
-		{
-			if(currentTag == -1)
-			{
-				entriesToShow = noteList.Notes.ToArray();
-			}
-			else if(currentTag >= 0)
-			{
-				entriesToShow = noteList.Notes.Where(e => e.Tag == noteList.Tags[currentTag]).ToArray();
-			}
-			if(!string.IsNullOrEmpty(SearchString))
-			{
-				entriesToShow = entriesToShow.Where(e => e.Text.Contains(searchString)).ToArray();
-			}
-		}
-
-		private void SetCurrentTag(int index)
-		{
-			EditorApplication.delayCall += () =>
-			{
-				currentTag = index;
-				RefreshEntriesToShow();
-				Repaint();
-			};
-		}
-
-		public static string AssetsRelativePath(string absolutePath)
-		{
-			if(!absolutePath.StartsWith(Application.dataPath))
-			{
-				throw new ArgumentException("Full path does not contain the current project's Assets folder", "absolutePath");
-			}
-			return "Assets" + absolutePath.Substring(Application.dataPath.Length);
+			EditorApplication.delayCall += Repaint;
 		}
 
 		private string DrawSearchField(string searchString)
@@ -320,8 +238,6 @@
 			}
 			return searchString;
 		}
-		#endregion
-
 		#endregion
 	}
 }

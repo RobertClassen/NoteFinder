@@ -11,9 +11,12 @@
 	public class NoteList : ScriptableObject
 	{
 		#region Fields
+		[NonSerialized]
 		public List<Note> Notes = new List<Note>();
 		[SerializeField]
-		public List<string> tags = new List<string> { "TODO", "BUG" };
+		private List<string> tags = new List<string> { "TODO", "BUG" };
+		[NonSerialized]
+		private Vector2 mainAreaScrollPosition = Vector2.zero;
 		#endregion
 
 		#region Properties
@@ -50,6 +53,35 @@
 			if(Tags.Count >= (index + 1))
 			{
 				Tags.RemoveAt(index);
+			}
+		}
+
+		public void Draw(string tag)
+		{
+			using(new GUILayout.VerticalScope(GUI.skin.box, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true)))
+			{
+				using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(mainAreaScrollPosition))
+				{
+					mainAreaScrollPosition = scrollViewScrope.scrollPosition;
+					if(string.IsNullOrEmpty(tag))
+					{
+						foreach(Note note in Notes)
+						{
+							note.Draw();
+						}	
+					}
+					else
+					{
+						foreach(Note note in Notes)
+						{
+							if(note.Tag != tag)
+							{
+								continue;
+							}
+							note.Draw();
+						}
+					}
+				}
 			}
 		}
 		#endregion
