@@ -66,7 +66,7 @@
 			}
 		}
 
-		public void DrawMenu(ToDoManager toDoManager)
+		public void DrawMenu(NoteFinder noteFinder)
 		{
 			GenericMenu menu = new GenericMenu();
 
@@ -75,7 +75,7 @@
 				menu.AddItem(tag.Name, tag.IsEnabled, tag.Toggle);
 			}
 			menu.AddSeparator();
-			menu.AddItem("Edit...", false, () => toDoManager.IDrawable = this);
+			menu.AddItem("Edit...", false, () => noteFinder.IDrawable = this);
 			menu.ShowAsContext();
 		}
 

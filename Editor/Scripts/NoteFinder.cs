@@ -8,7 +8,7 @@
 	using UnityEditor;
 	using UnityEngine;
 
-	public class ToDoManager : EditorWindow, IDrawable
+	public class NoteFinder : EditorWindow, IDrawable
 	{
 		#region Constants
 		private const string fileExtension = "*.cs";
@@ -40,7 +40,7 @@
 		[MenuItem("Tools/NoteFinder")]
 		public static void OpenWindow()
 		{
-			ToDoManager window = GetWindow<ToDoManager>();
+			NoteFinder window = GetWindow<NoteFinder>();
 			window.minSize = new Vector2(400, 250);
 			window.wantsMouseMove = true;
 			window.titleContent = new GUIContent("Notes", EditorGUIUtility.IconContent("d_UnityEditor.ConsoleWindow").image);

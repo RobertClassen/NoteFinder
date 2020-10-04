@@ -11,7 +11,7 @@
 	{
 		#region Fields
 		[SerializeField]
-		ToDoManager toDoManager = null;
+		NoteFinder noteFinder = null;
 		[SerializeField]
 		private string searchString = string.Empty;
 		#endregion
@@ -31,9 +31,9 @@
 		#endregion
 
 		#region Constructors
-		public MenuBar(ToDoManager toDoManager)
+		public MenuBar(NoteFinder noteFinder)
 		{
-			this.toDoManager = toDoManager;
+			this.noteFinder = noteFinder;
 		}
 		#endregion
 
@@ -44,12 +44,12 @@
 			{
 				if(GUILayout.Button("Scan", EditorStyles.toolbarButton))
 				{
-					toDoManager.ScanAllFiles();
+					noteFinder.ScanAllFiles();
 				}
 
 				if(GUILayout.Button("Tags", EditorStyles.toolbarButton))
 				{
-					toDoManager.TagList.DrawMenu(toDoManager);
+					noteFinder.TagList.DrawMenu(noteFinder);
 				}
 
 				GUILayout.FlexibleSpace();
@@ -66,7 +66,7 @@
 			{
 				searchString = string.Empty;
 				GUI.FocusControl(null);
-				EditorApplication.delayCall += toDoManager.Repaint;
+				EditorApplication.delayCall += noteFinder.Repaint;
 				GUIUtility.ExitGUI();
 			}
 		}
