@@ -1,4 +1,4 @@
-﻿namespace Todo
+﻿namespace Notes
 {
 	using System;
 	using System.Collections;
@@ -15,7 +15,7 @@
 	{
 		#region Fields
 		public string Text = null;
-		public string Tag = null;
+		public Tag Tag = null;
 		public string FilePath = null;
 		public int Line = 0;
 
@@ -27,7 +27,7 @@
 		#endregion
 
 		#region Constructors
-		private Note(string text, string tag, string filePath, int line)
+		private Note(string text, Tag tag, string filePath, int line)
 		{
 			Text = text;
 			Tag = tag;
@@ -39,7 +39,7 @@
 		#endregion
 
 		#region Methods
-		public static Note[] Parse(string filePath, List<string> tags)
+		public static Note[] Parse(string filePath, List<Tag> tags)
 		{
 			if(!File.Exists(filePath))
 			{
@@ -50,7 +50,7 @@
 			List<Note> entries = new List<Note>();
 			for(int i = 0; i < tags.Count; i++)
 			{
-				entries.AddRange(Regex.Matches(text, string.Format(@"(?<=\W|^)\/\/(\s?(?i){0}(?-i))(:?)(.*)", tags[i]))
+				entries.AddRange(Regex.Matches(text, string.Format(@"(?<=\W|^)\/\/(\s?(?i){0}(?-i))(:?)(.*)", tags[i].Name))
 					.Cast<Match>()
 					.Select(match => new Note(match.Groups[3].Value.Trim(), tags[i], filePath, GetLine(text, match.Index))));
 			}
@@ -64,13 +64,19 @@
 
 		public void Draw()
 		{
-			using(new GUILayout.VerticalScope(EditorStyles.helpBox))
+			if(!Tag.IsEnabled)
+			{
+				return;
+			}
+
+			using(new GUILayout.VerticalScope(GUI.skin.box))
 			{
 				using(new GUILayout.HorizontalScope())
 				{
-					GUILayout.Label(Tag, EditorStyles.boldLabel);
+					GUILayout.Label(Tag.Name, EditorStyles.boldLabel);
 					GUILayout.FlexibleSpace();
-					GUILayout.Label(PathToShow, EditorStyles.miniBoldLabel);
+					GUIStyle pathStyle = new GUIStyle(EditorStyles.miniBoldLabel){ wordWrap = true };
+					GUILayout.Label(PathToShow, pathStyle);
 				}
 				//GUILayout.Space(5f);
 				GUIStyle textStyle = new GUIStyle(EditorStyles.largeLabel){ wordWrap = true };
@@ -81,7 +87,7 @@
 			if(rect.Contains(e.mousePosition))
 			{
 				EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
-				if(e.isMouse && e.type == EventType.MouseDown /*&& e.clickCount == 2*/)
+				if(e.isMouse && e.type == EventType.MouseUp /*&& e.clickCount == 2*/)
 				{
 					OpenScript();
 				}

@@ -1,4 +1,4 @@
-﻿namespace Todo
+﻿namespace Notes
 {
 	using System;
 	using System.Collections;
@@ -16,38 +16,31 @@
 		#endregion
 
 		#region Fields
+		[SerializeField]
+		private MenuBar menuBar = null;
+
 		private DirectoryInfo directory = null;
 		private FileSystemWatcher watcher = null;
+
+		[SerializeField]
+		private TagList tagList = null;
+		[SerializeField]
 		private NoteList noteList = null;
-
-		private string searchString = string.Empty;
-
-		private string newTagName = string.Empty;
-
-		private Vector2 sidebarScrollPosition = Vector2.zero;
 		#endregion
 
 		#region Properties
-		public string SearchString
-		{
-			get { return searchString; }
-			set
-			{
-				if(value != searchString)
-				{
-					searchString = value;
-				}
-			}
-		}
+		public TagList TagList
+		{ get { return tagList; } }
 		#endregion
 
 		#region Constructors
-		[MenuItem("Tools/TODO Manager")]
+		[MenuItem("Tools/NoteFinder")]
 		public static void OpenWindow()
 		{
-			ToDoManager window = GetWindow<ToDoManager>("//TODO");
+			ToDoManager window = GetWindow<ToDoManager>();
 			window.minSize = new Vector2(400, 250);
 			window.wantsMouseMove = true;
+			window.titleContent = new GUIContent("Notes", EditorGUIUtility.IconContent("d_UnityEditor.ConsoleWindow").image);
 			window.Show();
 		}
 		#endregion
@@ -75,7 +68,17 @@
 			{
 				noteList = noteLists[0];
 			}
-			
+			TagList[] tagLists = Resources.FindObjectsOfTypeAll<TagList>();
+			if(tagLists != null && tagLists.Length > 0)
+			{
+				tagList = tagLists[0];
+			}
+
+			if(menuBar == null)
+			{
+				menuBar = new MenuBar(this);
+			}
+
 			directory = new DirectoryInfo(Application.dataPath);
 
 			watcher = new FileSystemWatcher(Application.dataPath, fileExtension);
@@ -118,91 +121,17 @@
 				return;
 			}
 
-			Undo.RecordObject(noteList, "tododata");
-
-			DrawToolbar();
+			menuBar.Draw();
 			using(new GUILayout.HorizontalScope())
 			{
-				DrawSideBar();
-				//TODO: use tag instead SearchString
-				noteList.Draw(SearchString);
+				//DrawSideBar();
+				noteList.Draw(menuBar.SearchString);
 			}
 
 			EditorUtility.SetDirty(noteList);
 		}
 
-		private void DrawToolbar()
-		{
-			using(new GUILayout.HorizontalScope(EditorStyles.toolbar))
-			{
-				if(GUILayout.Button("Scan", EditorStyles.toolbarButton))
-				{
-					ScanAllFiles();
-				}
-				GUILayout.FlexibleSpace();
-				SearchString = DrawSearchField(SearchString);
-			}
-		}
-
-		private void DrawSideBar()
-		{
-			using(new GUILayout.VerticalScope(GUI.skin.box, GUILayout.Width(sidebarWidth), GUILayout.ExpandHeight(true)))
-			{
-				using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(sidebarScrollPosition))
-				{
-					sidebarScrollPosition = scrollViewScrope.scrollPosition;
-					DrawTagField(-1);
-					for(int i = 0; i < noteList.Tags.Count; i++)
-					{
-						DrawTagField(i);
-					}
-				}
-				AddTagField();
-			}
-		}
-
-		private void DrawTagField(int index)
-		{
-			string tag = index == -1 ? "ALL" : noteList.Tags[index];
-			using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
-			{
-				GUILayout.Label(tag);
-				GUILayout.FlexibleSpace();
-				GUILayout.Label(string.Format("({0})", noteList.GetCountByTag(index)));
-				if(index != -1 && index != 0 && index != 1)
-				{
-					if(GUILayout.Button("-", EditorStyles.miniButton))
-					{
-						EditorApplication.delayCall += () =>
-						{
-							noteList.RemoveTag(index);
-							Repaint();
-						};
-					}
-				}
-			}
-			Event e = Event.current;
-			if(e.isMouse && e.type == EventType.MouseDown && GUILayoutUtility.GetLastRect().Contains(e.mousePosition))
-			{
-				SetCurrentTag();
-			}
-		}
-
-		private void AddTagField()
-		{
-			using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
-			{
-				newTagName = EditorGUILayout.TextField(newTagName);
-				if(GUILayout.Button("Add", EditorStyles.miniButton, GUILayout.ExpandWidth(false)))
-				{
-					noteList.AddTag(newTagName);
-					newTagName = "";
-					GUI.FocusControl(null);
-				}
-			}
-		}
-
-		private void ScanAllFiles()
+		public void ScanAllFiles()
 		{
 			foreach(FileInfo file in directory.GetFiles(fileExtension, SearchOption.AllDirectories))
 			{
@@ -219,24 +148,7 @@
 			}
 
 			noteList.Notes.RemoveAll(note => note.FilePath == filePath);
-			noteList.Notes.AddRange(Note.Parse(filePath, noteList.Tags));
-		}
-
-		private void SetCurrentTag()
-		{
-			EditorApplication.delayCall += Repaint;
-		}
-
-		private string DrawSearchField(string searchString)
-		{
-			searchString = GUILayout.TextField(searchString, EditorStyles.toolbarSearchField, GUILayout.Width(250));
-			if(GUILayout.Button(string.Empty, string.IsNullOrEmpty(searchString) ? 
-				"ToolbarSeachCancelButtonEmpty" : "ToolbarSeachCancelButton"))
-			{
-				searchString = string.Empty;
-				GUI.FocusControl(null);
-			}
-			return searchString;
+			noteList.Notes.AddRange(Note.Parse(filePath, tagList.Tags));
 		}
 		#endregion
 	}

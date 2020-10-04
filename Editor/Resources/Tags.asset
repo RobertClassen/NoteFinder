@@ -9,6 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a0238ba931f9460468000989700021fb, type: 3}
-  m_Name: NoteList
+  m_Script: {fileID: 11500000, guid: 0c2fff95cb96f654a86f7e25e2c6ec0f, type: 3}
+  m_Name: Tags
   m_EditorClassIdentifier: 
+  tags:
+  - name: TODO
+    IsEnabled: 1
+    Color: {r: 1, g: 1, b: 1, a: 1}
+  - name: BUG
+    IsEnabled: 1
+    Color: {r: 1, g: 1, b: 1, a: 1}
