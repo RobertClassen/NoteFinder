@@ -8,7 +8,7 @@
 	using UnityEngine;
 
 	[CreateAssetMenu(menuName = "TODO Manager/TagList")]
-	public class TagList : ScriptableObject
+	public class TagList : ScriptableObject, IDrawable
 	{
 		#region Fields
 		[SerializeField]
@@ -31,27 +31,25 @@
 		#region Methods
 		public void Draw()
 		{
-			using(new GUILayout.VerticalScope(GUI.skin.box))
+			GUILayout.Label("Tags");
+			using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(scrollPosition))
 			{
-				using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(scrollPosition))
-				{
-					scrollPosition = scrollViewScrope.scrollPosition;
-				}
-				AddTagField();
-			}
+				scrollPosition = scrollViewScrope.scrollPosition;
 
-			foreach(Tag tag in tags)
-			{
-				using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
+				foreach(Tag tag in tags)
 				{
-					GUILayout.Label(tag.Name);
-					GUILayout.FlexibleSpace();
-					if(GUILayout.Button("-", EditorStyles.miniButton))
+					using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
 					{
-						tags.Remove(tag);
+						tag.Draw();
+						GUILayout.FlexibleSpace();
+						if(GUILayout.Button("-"))
+						{
+							tags.Remove(tag);
+						}
 					}
 				}
 			}
+			AddTagField();
 		}
 
 		private void AddTagField()
@@ -59,7 +57,7 @@
 			using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
 			{
 				newTagName = EditorGUILayout.TextField(newTagName);
-				if(GUILayout.Button("Add", EditorStyles.miniButton, GUILayout.ExpandWidth(false)))
+				if(GUILayout.Button("Add", GUILayout.ExpandWidth(false)))
 				{
 					tags.Add(new Tag(newTagName));
 					newTagName = string.Empty;
@@ -68,12 +66,17 @@
 			}
 		}
 
-		public void DrawToggles()
+		public void DrawMenu(ToDoManager toDoManager)
 		{
+			GenericMenu menu = new GenericMenu();
+
 			foreach(Tag tag in tags)
 			{
-				tag.Draw();
+				menu.AddItem(tag.Name, tag.IsEnabled, tag.Toggle);
 			}
+			menu.AddSeparator();
+			menu.AddItem("Edit...", false, () => toDoManager.IDrawable = this);
+			menu.ShowAsContext();
 		}
 
 		public int GetCountByTag(List<Note> notes, Tag tag)

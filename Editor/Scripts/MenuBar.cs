@@ -47,23 +47,28 @@
 					toDoManager.ScanAllFiles();
 				}
 
-				toDoManager.TagList.DrawToggles();
+				if(GUILayout.Button("Tags", EditorStyles.toolbarButton))
+				{
+					toDoManager.TagList.DrawMenu(toDoManager);
+				}
 
 				GUILayout.FlexibleSpace();
-				SearchString = DrawSearchField(SearchString);
+				DrawSearchField();
 			}
 		}
 
-		private string DrawSearchField(string searchString)
+		private void DrawSearchField()
 		{
 			searchString = GUILayout.TextField(searchString, EditorStyles.toolbarSearchField, GUILayout.Width(250));
 			if(GUILayout.Button(string.Empty, string.IsNullOrEmpty(searchString) ? 
-				"ToolbarSeachCancelButtonEmpty" : "ToolbarSeachCancelButton"))
+				"ToolbarSeachCancelButtonEmpty" : "ToolbarSeachCancelButton") ||
+			   Event.current.rawType == EventType.KeyUp && Event.current.keyCode == KeyCode.Escape)
 			{
 				searchString = string.Empty;
 				GUI.FocusControl(null);
+				EditorApplication.delayCall += toDoManager.Repaint;
+				GUIUtility.ExitGUI();
 			}
-			return searchString;
 		}
 		#endregion
 	}

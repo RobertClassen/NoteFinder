@@ -14,27 +14,39 @@
 	public class Note
 	{
 		#region Fields
-		public string Text = null;
-		public Tag Tag = null;
-		public string FilePath = null;
-		public int Line = 0;
+		[SerializeField]
+		private string text = null;
+		[SerializeField]
+		private Tag tag = null;
+		[SerializeField]
+		private string filePath = null;
+		[SerializeField]
+		private int line = 0;
 
-		public string PathToShow = null;
+		[SerializeField]
+		private string PathToShow = null;
 		#endregion
 
 		#region Properties
+		public string Text
+		{ get { return text; } }
 
+		public Tag Tag
+		{ get { return tag; } }
+
+		public string FilePath
+		{ get { return filePath; } }
 		#endregion
 
 		#region Constructors
 		private Note(string text, Tag tag, string filePath, int line)
 		{
-			Text = text;
-			Tag = tag;
-			FilePath = filePath;
-			Line = line;
+			this.text = text;
+			this.tag = tag;
+			this.filePath = filePath;
+			this.line = line;
 
-			PathToShow = string.Format("{0}({1})", FilePath.Remove(0, Application.dataPath.Length - 6).Replace("\\", "/"), Line);
+			PathToShow = string.Format("{0} ({1})", filePath.Remove(0, Application.dataPath.Length - 6).Replace("\\", "/"), line);
 		}
 		#endregion
 
@@ -64,7 +76,7 @@
 
 		public void Draw()
 		{
-			if(!Tag.IsEnabled)
+			if(!tag.IsEnabled)
 			{
 				return;
 			}
@@ -73,7 +85,7 @@
 			{
 				using(new GUILayout.HorizontalScope())
 				{
-					GUILayout.Label(Tag.Name, EditorStyles.boldLabel);
+					GUILayout.Label(tag.Name, EditorStyles.boldLabel);
 					GUILayout.FlexibleSpace();
 					GUIStyle pathStyle = new GUIStyle(EditorStyles.miniBoldLabel){ wordWrap = true };
 					GUILayout.Label(PathToShow, pathStyle);
@@ -96,7 +108,7 @@
 
 		private void OpenScript()
 		{
-			EditorApplication.delayCall += () => InternalEditorUtility.OpenFileAtLineExternal(FilePath, Line);
+			EditorApplication.delayCall += () => InternalEditorUtility.OpenFileAtLineExternal(filePath, line);
 		}
 
 		public override bool Equals(object obj)
@@ -104,15 +116,15 @@
 			Note other = obj as Note;
 			return ReferenceEquals(this, other) ||
 			!ReferenceEquals(this, null) && !ReferenceEquals(other, null) && GetType() == other.GetType() &&
-			Text == other.Text && Tag == other.Tag && FilePath == other.FilePath && Line == other.Line;
+			Text == other.Text && tag == other.tag && filePath == other.filePath && line == other.line;
 		}
 
 		public override int GetHashCode()
 		{
 			int hashCode = (Text != null ? Text.GetHashCode() : 0);
-			hashCode = (hashCode * 397) ^ (Tag != null ? Tag.GetHashCode() : 0);
-			hashCode = (hashCode * 397) ^ (FilePath != null ? FilePath.GetHashCode() : 0);
-			hashCode = (hashCode * 397) ^ Line;
+			hashCode = (hashCode * 397) ^ (tag != null ? tag.GetHashCode() : 0);
+			hashCode = (hashCode * 397) ^ (filePath != null ? filePath.GetHashCode() : 0);
+			hashCode = (hashCode * 397) ^ line;
 			return hashCode;
 		}
 		#endregion

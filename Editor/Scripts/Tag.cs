@@ -13,7 +13,7 @@
 		[SerializeField]
 		private string name = null;
 		[SerializeField]
-		public bool IsEnabled = true;
+		private bool isEnabled = true;
 		[SerializeField]
 		public Color Color = Color.white;
 		#endregion
@@ -21,6 +21,9 @@
 		#region Properties
 		public string Name
 		{ get { return name; } }
+
+		public bool IsEnabled
+		{ get { return isEnabled; } }
 		#endregion
 
 		#region Constructors
@@ -33,7 +36,13 @@
 		#region Methods
 		public void Draw()
 		{
-			IsEnabled = GUILayout.Toggle(IsEnabled, name, EditorStyles.toolbarButton);
+			name = GUILayout.TextField(name, GUILayout.Width(100f));
+			Color = EditorGUILayout.ColorField(Color);
+		}
+
+		public void Toggle()
+		{
+			isEnabled = !isEnabled;
 		}
 		#endregion
 	}

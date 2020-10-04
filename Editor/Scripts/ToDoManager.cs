@@ -8,7 +8,7 @@
 	using UnityEditor;
 	using UnityEngine;
 
-	public class ToDoManager : EditorWindow
+	public class ToDoManager : EditorWindow, IDrawable
 	{
 		#region Constants
 		private const string fileExtension = "*.cs";
@@ -16,6 +16,9 @@
 		#endregion
 
 		#region Fields
+		[NonSerialized]
+		public IDrawable IDrawable = null;
+
 		[SerializeField]
 		private MenuBar menuBar = null;
 
@@ -53,7 +56,18 @@
 
 		void OnGUI()
 		{
-			Draw();
+			if(IDrawable == null)
+			{
+				Draw();
+			}
+			else
+			{
+				IDrawable.Draw();
+				if(GUILayout.Button("Exit"))
+				{
+					IDrawable = null;
+				}
+			}
 
 			if(Event.current.type == EventType.MouseMove)
 			{
@@ -113,7 +127,7 @@
 			EditorApplication.delayCall += () => noteList.Notes.RemoveAll(note => note.FilePath == e.FullPath);
 		}
 
-		private void Draw()
+		public void Draw()
 		{
 			if(noteList == null)
 			{
@@ -122,13 +136,7 @@
 			}
 
 			menuBar.Draw();
-			using(new GUILayout.HorizontalScope())
-			{
-				//DrawSideBar();
-				noteList.Draw(menuBar.SearchString);
-			}
-
-			EditorUtility.SetDirty(noteList);
+			noteList.Draw(menuBar.SearchString);
 		}
 
 		public void ScanAllFiles()
