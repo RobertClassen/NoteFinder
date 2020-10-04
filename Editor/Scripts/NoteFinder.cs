@@ -4,7 +4,6 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.IO;
-	using System.Linq;
 	using UnityEditor;
 	using UnityEngine;
 
@@ -34,6 +33,9 @@
 		#region Properties
 		public TagList TagList
 		{ get { return tagList; } }
+
+		public NoteList NoteList
+		{ get { return noteList; } }
 		#endregion
 
 		#region Constructors

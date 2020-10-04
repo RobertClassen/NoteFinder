@@ -72,7 +72,8 @@
 
 			foreach(Tag tag in tags)
 			{
-				menu.AddItem(tag.Name, tag.IsEnabled, tag.Toggle);
+				menu.AddItem(string.Format("{0} ({1})", tag.Name, noteFinder.NoteList.Notes
+					.Count(note => note.Tag == tag)), tag.IsEnabled, tag.Toggle);
 			}
 			menu.AddSeparator();
 			menu.AddItem("Edit...", false, () => noteFinder.IDrawable = this);
