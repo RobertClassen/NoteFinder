@@ -7,7 +7,7 @@
 	using UnityEditor;
 	using UnityEngine;
 
-	[CreateAssetMenu(menuName = "TODO Manager/TagList")]
+	[CreateAssetMenu(menuName = "Note Finder/TagList")]
 	public class TagList : ScriptableObject, IDrawable
 	{
 		#region Fields
@@ -36,15 +36,15 @@
 			{
 				scrollPosition = scrollViewScrope.scrollPosition;
 
-				foreach(Tag tag in tags)
+				for(int i = 0; i < tags.Count; i++)
 				{
-					using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
+					using(new GUILayout.HorizontalScope(GUI.skin.box))
 					{
-						tag.Draw();
+						tags[i].Draw();
 						GUILayout.FlexibleSpace();
 						if(GUILayout.Button("-"))
 						{
-							tags.Remove(tag);
+							tags.RemoveAt(i);
 						}
 					}
 				}

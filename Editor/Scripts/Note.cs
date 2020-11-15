@@ -15,31 +15,31 @@
 	{
 		#region Fields
 		[SerializeField]
-		private string text = null;
-		[SerializeField]
-		private Tag tag = null;
-		[SerializeField]
 		private string filePath = null;
 		[SerializeField]
 		private int line = 0;
-
+		[SerializeField]
+		private Tag tag = null;
+		[SerializeField]
+		private string text = null;
+		
 		[SerializeField]
 		private string PathToShow = null;
 		#endregion
 
 		#region Properties
-		public string Text
-		{ get { return text; } }
+		public string FilePath
+		{ get { return filePath; } }
 
 		public Tag Tag
 		{ get { return tag; } }
 
-		public string FilePath
-		{ get { return filePath; } }
+		public string Text
+		{ get { return text; } }
 		#endregion
 
 		#region Constructors
-		private Note(string text, Tag tag, string filePath, int line)
+		private Note(string filePath, int line, Tag tag, string text)
 		{
 			this.text = text;
 			this.tag = tag;
@@ -64,7 +64,7 @@
 			{
 				entries.AddRange(Regex.Matches(text, string.Format(@"(?<=\W|^)\/\/(\s?(?i){0}(?-i))(:?)(.*)", tags[i].Name))
 					.Cast<Match>()
-					.Select(match => new Note(match.Groups[3].Value.Trim(), tags[i], filePath, GetLine(text, match.Index))));
+					.Select(match => new Note(filePath, GetLine(text, match.Index), tags[i], match.Groups[3].Value.Trim())));
 			}
 			return entries.ToArray();
 		}
@@ -81,19 +81,23 @@
 				return;
 			}
 
-			using(new GUILayout.VerticalScope(GUI.skin.box))
+			using(new GUIColorScope(tag.Color))
 			{
-				using(new GUILayout.HorizontalScope())
+				using(new GUILayout.VerticalScope(GUI.skin.box))
 				{
-					GUILayout.Label(tag.Name, EditorStyles.boldLabel);
-					GUILayout.FlexibleSpace();
-					GUIStyle pathStyle = new GUIStyle(EditorStyles.miniBoldLabel){ wordWrap = true };
-					GUILayout.Label(PathToShow, pathStyle);
+					using(new GUILayout.HorizontalScope())
+					{
+						GUILayout.Label(tag.Name, EditorStyles.boldLabel);
+						GUILayout.FlexibleSpace();
+						GUIStyle pathStyle = new GUIStyle(EditorStyles.miniBoldLabel){ wordWrap = true };
+						GUILayout.Label(PathToShow, pathStyle);
+					}
+					//GUILayout.Space(5f);
+					GUIStyle textStyle = new GUIStyle(EditorStyles.largeLabel){ wordWrap = true };
+					GUILayout.Label(text, textStyle);
 				}
-				//GUILayout.Space(5f);
-				GUIStyle textStyle = new GUIStyle(EditorStyles.largeLabel){ wordWrap = true };
-				GUILayout.Label(Text, textStyle);
 			}
+
 			Event e = Event.current;
 			Rect rect = GUILayoutUtility.GetLastRect();
 			if(rect.Contains(e.mousePosition))
@@ -116,7 +120,7 @@
 			Note other = obj as Note;
 			return ReferenceEquals(this, other) ||
 			!ReferenceEquals(this, null) && !ReferenceEquals(other, null) && GetType() == other.GetType() &&
-			Text == other.Text && tag == other.tag && filePath == other.filePath && line == other.line;
+			text == other.text && tag == other.tag && filePath == other.filePath && line == other.line;
 		}
 
 		public override int GetHashCode()
