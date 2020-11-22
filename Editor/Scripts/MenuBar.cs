@@ -53,21 +53,7 @@
 				}
 
 				GUILayout.FlexibleSpace();
-				DrawSearchField();
-			}
-		}
-
-		private void DrawSearchField()
-		{
-			searchString = GUILayout.TextField(searchString, EditorStyles.toolbarSearchField, GUILayout.Width(250));
-			if(GUILayout.Button(string.Empty, string.IsNullOrEmpty(searchString) ? 
-				"ToolbarSeachCancelButtonEmpty" : "ToolbarSeachCancelButton") ||
-			   Event.current.rawType == EventType.KeyUp && Event.current.keyCode == KeyCode.Escape)
-			{
-				searchString = string.Empty;
-				GUI.FocusControl(null);
-				EditorApplication.delayCall += noteFinder.Repaint;
-				GUIUtility.ExitGUI();
+				searchString = SearchField.Draw(searchString, noteFinder.Repaint);
 			}
 		}
 		#endregion
