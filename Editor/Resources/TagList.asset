@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0c2fff95cb96f654a86f7e25e2c6ec0f, type: 3}
-  m_Name: Tags
+  m_Name: TagList
   m_EditorClassIdentifier: 
   tags:
   - name: TODO
-    IsEnabled: 1
+    isEnabled: 1
     Color: {r: 1, g: 1, b: 1, a: 1}
   - name: BUG
-    IsEnabled: 1
-    Color: {r: 1, g: 1, b: 1, a: 1}
+    isEnabled: 1
+    Color: {r: 1, g: 0, b: 0, a: 1}

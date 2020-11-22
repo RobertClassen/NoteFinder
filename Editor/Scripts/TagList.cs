@@ -7,7 +7,7 @@
 	using UnityEditor;
 	using UnityEngine;
 
-	[CreateAssetMenu(menuName = "Note Finder/TagList")]
+	[CreateAssetMenu(menuName = "NoteFinder/TagList")]
 	public class TagList : ScriptableObject, IDrawable
 	{
 		#region Fields
@@ -40,7 +40,7 @@
 				{
 					using(new GUILayout.HorizontalScope(GUI.skin.box))
 					{
-						tags[i].Draw();
+						tags[i].Draw(this);
 						GUILayout.FlexibleSpace();
 						if(GUILayout.Button("-"))
 						{

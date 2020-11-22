@@ -15,7 +15,7 @@
 		[SerializeField]
 		private bool isEnabled = true;
 		[SerializeField]
-		public Color Color = Color.white;
+		private Color color = Color.white;
 		#endregion
 
 		#region Properties
@@ -24,6 +24,9 @@
 
 		public bool IsEnabled
 		{ get { return isEnabled; } }
+
+		public Color Color
+		{ get { return color; } }
 		#endregion
 
 		#region Constructors
@@ -34,10 +37,22 @@
 		#endregion
 
 		#region Methods
-		public void Draw()
+		public void Draw(TagList tagList)
 		{
-			name = GUILayout.TextField(name, GUILayout.Width(100f));
-			Color = EditorGUILayout.ColorField(Color);
+			string newName = GUILayout.TextField(name, GUILayout.Width(100f));
+			if(newName != name)
+			{
+				Undo.RegisterCompleteObjectUndo(tagList, "Changed Tag Name");
+				name = newName;
+				EditorUtility.SetDirty(tagList);
+			}
+			Color newColor = EditorGUILayout.ColorField(color);
+			if(newColor != color)
+			{
+				Undo.RegisterCompleteObjectUndo(tagList, "Changed Tag Color");
+				color = newColor;
+				EditorUtility.SetDirty(tagList);
+			}
 		}
 
 		public void Toggle()
