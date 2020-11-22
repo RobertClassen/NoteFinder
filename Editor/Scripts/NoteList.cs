@@ -3,15 +3,19 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using UnityEditor;
 	using UnityEngine;
 
-	[CreateAssetMenu(menuName = "TODO Manager/NoteList")]
+	[CreateAssetMenu(menuName = "NoteFinder/NoteList")]
 	[Serializable]
 	public class NoteList : ScriptableObject
 	{
 		#region Fields
 		[NonSerialized]
 		private List<Note> notes = new List<Note>();
+
+		[NonSerialized]
+		private Dictionary<string, bool> isFilePathExpanded = new Dictionary<string, bool>();
 
 		[NonSerialized]
 		private Vector2 mainAreaScrollPosition = Vector2.zero;
@@ -27,33 +31,36 @@
 		#endregion
 
 		#region Methods
-		public Note GetEntryAt(int index)
-		{
-			return notes[index];
-		}
-
 		public void Draw(string searchString)
 		{
 			using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(mainAreaScrollPosition))
 			{
 				mainAreaScrollPosition = scrollViewScrope.scrollPosition;
-				if(string.IsNullOrEmpty(searchString))
+				string previousFilePath = string.Empty;
+				bool isExpanded = true;
+				foreach(Note note in notes)
 				{
-					foreach(Note note in notes)
+					if(!string.IsNullOrEmpty(searchString) && !note.Text.Contains(searchString))
 					{
-						note.Draw();
-					}	
-				}
-				else
-				{
-					foreach(Note note in notes)
+						continue;
+					}
+
+					if(note.RelativeFilePath != previousFilePath)
 					{
-						if(!note.Text.Contains(searchString))
+						if(!isFilePathExpanded.TryGetValue(note.RelativeFilePath, out isExpanded))
 						{
-							continue;
+							isExpanded = true;
 						}
+						isFilePathExpanded[note.RelativeFilePath] = EditorGUILayout.Foldout(isExpanded, 
+							note.RelativeFilePath, true);
+					}
+
+					if(isExpanded)
+					{
 						note.Draw();
 					}
+
+					previousFilePath = note.RelativeFilePath;
 				}
 			}
 		}

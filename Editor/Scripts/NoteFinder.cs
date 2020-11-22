@@ -4,6 +4,7 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.IO;
+	using System.Reflection;
 	using UnityEditor;
 	using UnityEngine;
 
@@ -105,6 +106,9 @@
 
 			watcher.EnableRaisingEvents = true;
 			watcher.IncludeSubdirectories = true;
+
+			Undo.undoRedoPerformed -= Repaint;
+			Undo.undoRedoPerformed += Repaint;
 
 			ScanAllFiles();
 		}

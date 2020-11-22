@@ -13,6 +13,12 @@
 	[Serializable]
 	public class Note
 	{
+		#region Constants
+		private static readonly GUILayoutOption buttonWidth = GUILayout.Width(50f);
+		private static readonly GUILayoutOption tagWidth = GUILayout.Width(50f);
+		private static readonly GUILayoutOption tagHeight = GUILayout.Height(EditorGUIUtility.singleLineHeight);
+		#endregion
+
 		#region Fields
 		[SerializeField]
 		private string filePath = null;
@@ -24,12 +30,17 @@
 		private string text = null;
 		
 		[SerializeField]
-		private string PathToShow = null;
+		private string relativeFilePath = null;
+		[SerializeField]
+		private GUIContent lineContent = null;
 		#endregion
 
 		#region Properties
 		public string FilePath
 		{ get { return filePath; } }
+
+		public string RelativeFilePath
+		{ get { return relativeFilePath; } }
 
 		public Tag Tag
 		{ get { return tag; } }
@@ -46,7 +57,8 @@
 			this.filePath = filePath;
 			this.line = line;
 
-			PathToShow = string.Format("{0} ({1})", filePath.Remove(0, Application.dataPath.Length - 6).Replace("\\", "/"), line);
+			relativeFilePath = filePath.Remove(0, Application.dataPath.Length - 6).Replace("\\", "/");
+			lineContent = new GUIContent(line.ToString(), "Go to line");
 		}
 		#endregion
 
@@ -81,55 +93,29 @@
 				return;
 			}
 
-			using(new GUIColorScope(tag.Color))
+			using(new GUILayout.HorizontalScope())
 			{
-				using(new GUILayout.VerticalScope(GUI.skin.box))
+				GUILayout.Space(EditorGUIUtility.singleLineHeight);
+				using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
 				{
-					using(new GUILayout.HorizontalScope())
+					if(GUILayout.Button(lineContent, buttonWidth))
 					{
-						GUILayout.Label(tag.Name, EditorStyles.boldLabel);
-						GUILayout.FlexibleSpace();
-						GUIStyle pathStyle = new GUIStyle(EditorStyles.miniBoldLabel){ wordWrap = true };
-						GUILayout.Label(PathToShow, pathStyle);
+						OpenScript();
 					}
-					//GUILayout.Space(5f);
-					GUIStyle textStyle = new GUIStyle(EditorStyles.largeLabel){ wordWrap = true };
-					GUILayout.Label(text, textStyle);
-				}
-			}
+					using(new GUIColorScope(tag.Color))
+					{
+						GUILayout.Label(tag.Name, EditorStyles.helpBox, tagWidth);
+					}
 
-			Event e = Event.current;
-			Rect rect = GUILayoutUtility.GetLastRect();
-			if(rect.Contains(e.mousePosition))
-			{
-				EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
-				if(e.isMouse && e.type == EventType.MouseUp /*&& e.clickCount == 2*/)
-				{
-					OpenScript();
+					GUIStyle textStyle = new GUIStyle(EditorStyles.label){ wordWrap = true };
+					GUILayout.Label(text, textStyle);
 				}
 			}
 		}
 
 		private void OpenScript()
 		{
-			EditorApplication.delayCall += () => InternalEditorUtility.OpenFileAtLineExternal(filePath, line);
-		}
-
-		public override bool Equals(object obj)
-		{
-			Note other = obj as Note;
-			return ReferenceEquals(this, other) ||
-			!ReferenceEquals(this, null) && !ReferenceEquals(other, null) && GetType() == other.GetType() &&
-			text == other.text && tag == other.tag && filePath == other.filePath && line == other.line;
-		}
-
-		public override int GetHashCode()
-		{
-			int hashCode = (Text != null ? Text.GetHashCode() : 0);
-			hashCode = (hashCode * 397) ^ (tag != null ? tag.GetHashCode() : 0);
-			hashCode = (hashCode * 397) ^ (filePath != null ? filePath.GetHashCode() : 0);
-			hashCode = (hashCode * 397) ^ line;
-			return hashCode;
+			InternalEditorUtility.OpenFileAtLineExternal(filePath, line);
 		}
 		#endregion
 	}
