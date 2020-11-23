@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using System.Linq;
 	using UnityEditor;
 	using UnityEngine;
 
@@ -49,10 +48,10 @@
 					}
 				}
 			}
-			AddTagField();
+			DrawAddTagField();
 		}
 
-		private void AddTagField()
+		private void DrawAddTagField()
 		{
 			using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
 			{
@@ -64,25 +63,6 @@
 					GUI.FocusControl(null);
 				}
 			}
-		}
-
-		public void DrawMenu(NoteFinder noteFinder)
-		{
-			GenericMenu menu = new GenericMenu();
-
-			foreach(Tag tag in tags)
-			{
-				menu.AddItem(string.Format("{0} ({1})", tag.Name, noteFinder.NoteList.Notes
-					.Count(note => note.Tag == tag)), tag.IsEnabled, tag.Toggle);
-			}
-			menu.AddSeparator();
-			menu.AddItem("Edit...", false, () => noteFinder.IDrawable = this);
-			menu.ShowAsContext();
-		}
-
-		public int GetCountByTag(List<Note> notes, Tag tag)
-		{
-			return notes.Count(note => note.Tag == tag);
 		}
 		#endregion
 	}

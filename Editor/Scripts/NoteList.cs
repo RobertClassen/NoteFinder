@@ -3,66 +3,94 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.IO;
+	using System.Linq;
+	using System.Text.RegularExpressions;
 	using UnityEditor;
+	using UnityEditorInternal;
 	using UnityEngine;
 
-	[CreateAssetMenu(menuName = "NoteFinder/NoteList")]
 	[Serializable]
-	public class NoteList : ScriptableObject
+	public class NoteList
 	{
 		#region Fields
-		[NonSerialized]
+		[SerializeField]
+		private string relativePath = null;
+		[SerializeField]
+		private bool isExpanded = true;
+		[SerializeField]
 		private List<Note> notes = new List<Note>();
-
-		[NonSerialized]
-		private Dictionary<string, bool> isFilePathExpanded = new Dictionary<string, bool>();
-
-		[NonSerialized]
-		private Vector2 mainAreaScrollPosition = Vector2.zero;
 		#endregion
 
 		#region Properties
+		public string RelativePath
+		{ get { return relativePath; } }
+
 		public List<Note> Notes
 		{ get { return notes; } }
 		#endregion
 
 		#region Constructors
-
+		private NoteList(string relativePath, List<Note> notes)
+		{
+			this.relativePath = relativePath;
+			this.notes = notes;
+		}
 		#endregion
 
 		#region Methods
+		public static NoteList Parse(string filePath, string relativePath, List<Tag> tags)
+		{
+			string text = File.ReadAllText(filePath);
+			List<Note> notes = new List<Note>();
+			foreach(Tag tag in tags)
+			{
+				notes.AddRange(Regex.Matches(text, string.Format(@"(?<=\W|^)\/\/(\s?(?i){0}(?-i))(:?)(.*)", tag.Name))
+					.Cast<Match>()
+					.Select(match => new Note(GetLine(text, match.Index), tag, match.Groups[3].Value.Trim())));
+			}
+			return new NoteList(relativePath, notes.OrderBy(note => note.Line).ToList());
+		}
+
+		private static int GetLine(string text, int index)
+		{
+			return text.Take(index).Count(c => c == '\n') + 1;
+		}
+
 		public void Draw(string searchString)
 		{
-			using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(mainAreaScrollPosition))
+			isExpanded = EditorGUILayout.Foldout(isExpanded, RelativePath, true);
+			if(!isExpanded)
 			{
-				mainAreaScrollPosition = scrollViewScrope.scrollPosition;
-				string previousFilePath = string.Empty;
-				bool isExpanded = true;
-				foreach(Note note in notes)
+				return;
+			}
+
+			using(new GUILayout.HorizontalScope())
+			{
+				GUILayout.Space(EditorGUIUtility.singleLineHeight);
+				using(new GUILayout.VerticalScope())
 				{
-					if(!string.IsNullOrEmpty(searchString) && !note.Text.Contains(searchString))
+					foreach(Note note in notes)
 					{
-						continue;
-					}
-
-					if(note.RelativeFilePath != previousFilePath)
-					{
-						if(!isFilePathExpanded.TryGetValue(note.RelativeFilePath, out isExpanded))
+						if(!string.IsNullOrEmpty(searchString) && !note.Text.Contains(searchString))
 						{
-							isExpanded = true;
+							continue;
 						}
-						isFilePathExpanded[note.RelativeFilePath] = EditorGUILayout.Foldout(isExpanded, 
-							note.RelativeFilePath, true);
-					}
 
-					if(isExpanded)
-					{
-						note.Draw();
+						note.Draw(this);
 					}
-
-					previousFilePath = note.RelativeFilePath;
 				}
 			}
+		}
+
+		public void OpenScript(int line)
+		{
+			InternalEditorUtility.OpenFileAtLineExternal(GetFullPath(relativePath), line);
+		}
+
+		private static string GetFullPath(string relativePath)
+		{
+			return Path.Combine(Directory.GetParent(Application.dataPath).FullName, relativePath);
 		}
 		#endregion
 	}

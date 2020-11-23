@@ -9,8 +9,8 @@
 	public static class SearchField
 	{
 		#region Constants
-		private const string endCap = "ToolbarSeachCancelButton";
-		private const string endCapEmpty = "ToolbarSeachCancelButtonEmpty";
+		private const string endCap = "ToolbarSeachCancelButtonEmpty";
+		private const string endCapX = "ToolbarSeachCancelButton";
 		#endregion
 
 		#region Fields
@@ -41,7 +41,7 @@
 
 		private static bool DrawEndCap(string searchString)
 		{
-			return GUILayout.Button(string.Empty, string.IsNullOrEmpty(searchString) ? endCapEmpty : endCap);
+			return GUILayout.Button(string.Empty, string.IsNullOrEmpty(searchString) ? endCap : endCapX);
 		}
 
 		private static bool IsEscapePressed()

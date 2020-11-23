@@ -15,7 +15,7 @@ MonoBehaviour:
   tags:
   - name: TODO
     isEnabled: 1
-    Color: {r: 1, g: 1, b: 1, a: 1}
+    color: {r: 1, g: 1, b: 1, a: 1}
   - name: BUG
     isEnabled: 1
-    Color: {r: 1, g: 0, b: 0, a: 1}
+    color: {r: 1, g: 0, b: 0, a: 1}

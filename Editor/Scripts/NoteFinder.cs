@@ -4,7 +4,6 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.IO;
-	using System.Reflection;
 	using UnityEditor;
 	using UnityEngine;
 
@@ -12,7 +11,6 @@
 	{
 		#region Constants
 		private const string fileExtension = "*.cs";
-		private const float sidebarWidth = 150f;
 		#endregion
 
 		#region Fields
@@ -28,15 +26,18 @@
 		[SerializeField]
 		private TagList tagList = null;
 		[SerializeField]
-		private NoteList noteList = null;
+		private NoteListCollection noteListCollection = new NoteListCollection();
+
+		[SerializeField]
+		private Vector2 mainAreaScrollPosition = Vector2.zero;
 		#endregion
 
 		#region Properties
 		public TagList TagList
 		{ get { return tagList; } }
 
-		public NoteList NoteList
-		{ get { return noteList; } }
+		public NoteListCollection NoteListCollection
+		{ get { return noteListCollection; } }
 		#endregion
 
 		#region Constructors
@@ -44,7 +45,7 @@
 		public static void OpenWindow()
 		{
 			NoteFinder window = GetWindow<NoteFinder>();
-			window.minSize = new Vector2(400, 250);
+			window.minSize = new Vector2(250f, 250f);
 			window.wantsMouseMove = true;
 			window.titleContent = new GUIContent("Notes", EditorGUIUtility.IconContent("d_UnityEditor.ConsoleWindow").image);
 			window.Show();
@@ -80,13 +81,8 @@
 
 		private void Initialize()
 		{
-			NoteList[] noteLists = Resources.FindObjectsOfTypeAll<NoteList>();
-			if(noteLists != null && noteLists.Length > 0)
-			{
-				noteList = noteLists[0];
-			}
 			TagList[] tagLists = Resources.FindObjectsOfTypeAll<TagList>();
-			if(tagLists != null && tagLists.Length > 0)
+			if(tagLists?.Length > 0)
 			{
 				tagList = tagLists[0];
 			}
@@ -130,19 +126,24 @@
 
 		private void OnDeleted(object obj, FileSystemEventArgs e)
 		{
-			EditorApplication.delayCall += () => noteList.Notes.RemoveAll(note => note.FilePath == e.FullPath);
+			EditorApplication.delayCall += () => noteListCollection.NoteLists
+				.RemoveAll(note => note.RelativePath == GetRelativePath(e.FullPath));
 		}
 
 		public void Draw()
 		{
-			if(noteList == null)
+			if(noteListCollection == null)
 			{
-				GUILayout.Label("No data loaded", EditorStyles.centeredGreyMiniLabel);
+				GUILayout.Label("No Notes loaded", EditorStyles.centeredGreyMiniLabel);
 				return;
 			}
 
 			menuBar.Draw();
-			noteList.Draw(menuBar.SearchString);
+			using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(mainAreaScrollPosition))
+			{
+				mainAreaScrollPosition = scrollViewScrope.scrollPosition;
+				noteListCollection.Draw(menuBar.SearchString);
+			}
 		}
 
 		public void ScanAllFiles()
@@ -155,14 +156,20 @@
 
 		private void ScanFile(string filePath)
 		{
-			FileInfo file = new FileInfo(filePath);
-			if(!file.Exists)
+			if(!File.Exists(filePath))
 			{
 				return;
 			}
 
-			noteList.Notes.RemoveAll(note => note.FilePath == filePath);
-			noteList.Notes.AddRange(Note.Parse(filePath, tagList.Tags));
+			string relativePath = GetRelativePath(filePath);
+			noteListCollection.NoteLists.RemoveAll(noteList => noteList.RelativePath == relativePath);
+			Debug.Log(noteListCollection.NoteLists.Count);
+			noteListCollection.NoteLists.Add(NoteList.Parse(filePath, relativePath, tagList.Tags));
+		}
+
+		private static string GetRelativePath(string path)
+		{
+			return path.Remove(0, Directory.GetParent(Application.dataPath).FullName.Length + 1);
 		}
 		#endregion
 	}

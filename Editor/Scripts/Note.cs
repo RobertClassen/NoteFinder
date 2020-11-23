@@ -3,11 +3,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using System.IO;
-	using System.Linq;
-	using System.Text.RegularExpressions;
 	using UnityEditor;
-	using UnityEditorInternal;
 	using UnityEngine;
 
 	[Serializable]
@@ -21,8 +17,6 @@
 
 		#region Fields
 		[SerializeField]
-		private string filePath = null;
-		[SerializeField]
 		private int line = 0;
 		[SerializeField]
 		private Tag tag = null;
@@ -30,17 +24,12 @@
 		private string text = null;
 		
 		[SerializeField]
-		private string relativeFilePath = null;
-		[SerializeField]
-		private GUIContent lineContent = null;
+		private GUIContent lineButtonContent = null;
 		#endregion
 
 		#region Properties
-		public string FilePath
-		{ get { return filePath; } }
-
-		public string RelativeFilePath
-		{ get { return relativeFilePath; } }
+		public int Line
+		{ get { return line; } }
 
 		public Tag Tag
 		{ get { return tag; } }
@@ -50,72 +39,38 @@
 		#endregion
 
 		#region Constructors
-		private Note(string filePath, int line, Tag tag, string text)
+		public Note(int line, Tag tag, string text)
 		{
 			this.text = text;
 			this.tag = tag;
-			this.filePath = filePath;
 			this.line = line;
 
-			relativeFilePath = filePath.Remove(0, Application.dataPath.Length - 6).Replace("\\", "/");
-			lineContent = new GUIContent(line.ToString(), "Go to line");
+			lineButtonContent = new GUIContent(line.ToString(), "Go to line");
 		}
 		#endregion
 
 		#region Methods
-		public static Note[] Parse(string filePath, List<Tag> tags)
-		{
-			if(!File.Exists(filePath))
-			{
-				return null;
-			}
-
-			string text = File.ReadAllText(filePath);
-			List<Note> entries = new List<Note>();
-			for(int i = 0; i < tags.Count; i++)
-			{
-				entries.AddRange(Regex.Matches(text, string.Format(@"(?<=\W|^)\/\/(\s?(?i){0}(?-i))(:?)(.*)", tags[i].Name))
-					.Cast<Match>()
-					.Select(match => new Note(filePath, GetLine(text, match.Index), tags[i], match.Groups[3].Value.Trim())));
-			}
-			return entries.ToArray();
-		}
-
-		private static int GetLine(string text, int index)
-		{
-			return text.Take(index).Count(c => c == '\n') + 1;
-		}
-
-		public void Draw()
+		public void Draw(NoteList noteList)
 		{
 			if(!tag.IsEnabled)
 			{
 				return;
 			}
 
-			using(new GUILayout.HorizontalScope())
+			using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
 			{
-				GUILayout.Space(EditorGUIUtility.singleLineHeight);
-				using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
+				if(GUILayout.Button(lineButtonContent, buttonWidth))
 				{
-					if(GUILayout.Button(lineContent, buttonWidth))
-					{
-						OpenScript();
-					}
-					using(new GUIColorScope(tag.Color))
-					{
-						GUILayout.Label(tag.Name, EditorStyles.helpBox, tagWidth);
-					}
-
-					GUIStyle textStyle = new GUIStyle(EditorStyles.label){ wordWrap = true };
-					GUILayout.Label(text, textStyle);
+					noteList.OpenScript(line);
 				}
-			}
-		}
+				using(new GUIColorScope(tag.Color))
+				{
+					GUILayout.Label(tag.Name, EditorStyles.helpBox, tagWidth);
+				}
 
-		private void OpenScript()
-		{
-			InternalEditorUtility.OpenFileAtLineExternal(filePath, line);
+				GUIStyle textStyle = new GUIStyle(EditorStyles.label){ wordWrap = true };
+				GUILayout.Label(text, textStyle);
+			}
 		}
 		#endregion
 	}

@@ -11,23 +11,14 @@
 	{
 		#region Fields
 		[SerializeField]
-		NoteFinder noteFinder = null;
+		private NoteFinder noteFinder = null;
 		[SerializeField]
 		private string searchString = string.Empty;
 		#endregion
 
 		#region Properties
 		public string SearchString
-		{
-			get { return searchString; }
-			set
-			{
-				if(value != searchString)
-				{
-					searchString = value;
-				}
-			}
-		}
+		{ get { return searchString; } }
 		#endregion
 
 		#region Constructors
@@ -49,12 +40,26 @@
 
 				if(GUILayout.Button("Tags", EditorStyles.toolbarButton))
 				{
-					noteFinder.TagList.DrawMenu(noteFinder);
+					DrawTagMenu(noteFinder);
 				}
 
 				GUILayout.FlexibleSpace();
 				searchString = SearchField.Draw(searchString, noteFinder.Repaint);
 			}
+		}
+
+		private void DrawTagMenu(NoteFinder noteFinder)
+		{
+			GenericMenu menu = new GenericMenu();
+
+			foreach(Tag tag in noteFinder.TagList.Tags)
+			{
+				menu.AddItem(string.Format("{0} ({1})", tag.Name, noteFinder.NoteListCollection.GetTagCount(tag)), 
+					tag.IsEnabled, tag.Toggle);
+			}
+			menu.AddSeparator();
+			menu.AddItem("Edit...", false, () => noteFinder.IDrawable = noteFinder.TagList);
+			menu.ShowAsContext();
 		}
 		#endregion
 	}
