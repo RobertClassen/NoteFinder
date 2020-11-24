@@ -24,11 +24,11 @@
 		#endregion
 
 		#region Methods
-		public void Draw(string searchString)
+		public void Draw(string searchString, Action<string> onFilter)
 		{
 			foreach(NoteList noteList in noteLists)
 			{
-				noteList.Draw(searchString);
+				noteList.Draw(searchString, onFilter);
 			}
 		}
 

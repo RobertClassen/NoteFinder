@@ -138,7 +138,7 @@
 			menuBar.Draw();
 			using(new ScrollViewScope(ref mainAreaScrollPosition))
 			{
-				noteListCollection.Draw(menuBar.SearchString);
+				noteListCollection.Draw(menuBar.LowerSearchString, menuBar.SetFilter);
 			}
 		}
 

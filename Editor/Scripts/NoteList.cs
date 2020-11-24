@@ -13,13 +13,26 @@
 	[Serializable]
 	public class NoteList
 	{
+		#region Constants
+		private static readonly GUIContent filterButtonContent = EditorGUIUtility.TrIconContent("FilterByLabel", "Filter");
+		private static readonly GUILayoutOption filterButtonWidth = GUILayout.Width(EditorGUIUtility.singleLineHeight);
+		private static readonly GUILayoutOption filterButtonHeight = GUILayout.Height(EditorGUIUtility.singleLineHeight);
+		#endregion
+
 		#region Fields
 		[SerializeField]
 		private string relativePath = null;
 		[SerializeField]
+		private string lowerRelativePath = null;
+		[SerializeField]
 		private bool isExpanded = true;
 		[SerializeField]
 		private List<Note> notes = new List<Note>();
+
+		[SerializeField]
+		private string foldoutTitle = null;
+
+		private static GUIStyle filterButtonStyle = null;
 		#endregion
 
 		#region Properties
@@ -28,13 +41,24 @@
 
 		public List<Note> Notes
 		{ get { return notes; } }
+
+		private static GUIStyle FilterButtonStyle
+		{
+			get
+			{
+				filterButtonStyle = filterButtonStyle ?? new GUIStyle(GUI.skin.button) { padding = new RectOffset() };
+				return filterButtonStyle;
+			}
+		}
 		#endregion
 
 		#region Constructors
 		private NoteList(string relativePath, List<Note> notes)
 		{
 			this.relativePath = relativePath;
+			lowerRelativePath = relativePath.ToLowerInvariant();
 			this.notes = notes;
+			foldoutTitle = string.Format("{0} ({1})", relativePath, notes.Count);
 		}
 		#endregion
 
@@ -65,9 +89,28 @@
 			return line;
 		}
 
-		public void Draw(string searchString)
+		public void Draw(string searchString, Action<string> onFilter)
 		{
-			isExpanded = EditorGUILayout.Foldout(isExpanded, RelativePath, true);
+			if(notes.Count == 0)
+			{
+				return;
+			}
+
+			bool isFiltered = !string.IsNullOrEmpty(searchString);
+			bool isSearched = isFiltered && lowerRelativePath.Contains(searchString);
+			if(!(isSearched || notes.Any(note => note.LowerText.Contains(searchString))))
+			{
+				return;
+			}
+
+			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal))
+			{
+				isExpanded = EditorGUILayout.Foldout(isExpanded, foldoutTitle, true);
+				if(GUILayout.Button(filterButtonContent, FilterButtonStyle, filterButtonWidth, filterButtonHeight))
+				{
+					onFilter?.Invoke(relativePath);
+				}
+			}
 			if(!isExpanded)
 			{
 				return;
@@ -80,7 +123,7 @@
 				{
 					foreach(Note note in notes)
 					{
-						if(!string.IsNullOrEmpty(searchString) && !note.Text.Contains(searchString))
+						if(!isSearched && isFiltered && !note.Text.Contains(searchString))
 						{
 							continue;
 						}

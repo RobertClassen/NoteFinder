@@ -22,12 +22,14 @@
 		private Tag tag = null;
 		[SerializeField]
 		private string text = null;
+		[SerializeField]
+		private string lowerText = null;
 		
 		[SerializeField]
 		private GUIContent lineButtonContent = null;
 
 		[NonSerialized]
-		private GUIStyle textStyle = null;
+		private static GUIStyle textStyle = null;
 		#endregion
 
 		#region Properties
@@ -40,7 +42,10 @@
 		public string Text
 		{ get { return text; } }
 
-		private GUIStyle TextStyle
+		public string LowerText
+		{ get { return lowerText; } }
+
+		private static GUIStyle TextStyle
 		{
 			get
 			{
@@ -53,9 +58,10 @@
 		#region Constructors
 		public Note(int line, Tag tag, string text)
 		{
-			this.text = text;
-			this.tag = tag;
 			this.line = line;
+			this.tag = tag;
+			this.text = text;
+			lowerText = text.ToLowerInvariant();
 
 			lineButtonContent = new GUIContent(line.ToString(), "Go to line");
 		}
@@ -69,7 +75,7 @@
 				return;
 			}
 
-			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, EditorStyles.helpBox))
+			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, GUI.skin.box))
 			{
 				if(GUILayout.Button(lineButtonContent, buttonWidth))
 				{
