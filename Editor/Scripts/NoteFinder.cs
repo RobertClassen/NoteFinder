@@ -20,7 +20,7 @@
 		[SerializeField]
 		private MenuBar menuBar = null;
 
-		private DirectoryInfo directory = null;
+		[NonSerialized]
 		private FileSystemWatcher watcher = null;
 
 		[SerializeField]
@@ -44,11 +44,12 @@
 		[MenuItem("Tools/NoteFinder")]
 		public static void OpenWindow()
 		{
-			NoteFinder window = GetWindow<NoteFinder>();
-			window.minSize = new Vector2(250f, 250f);
-			window.wantsMouseMove = true;
-			window.titleContent = new GUIContent("Notes", EditorGUIUtility.IconContent("d_UnityEditor.ConsoleWindow").image);
-			window.Show();
+			NoteFinder noteFinder = GetWindow<NoteFinder>();
+			noteFinder.minSize = new Vector2(250f, 250f);
+			noteFinder.wantsMouseMove = true;
+			noteFinder.titleContent = new GUIContent("Notes", EditorGUIUtility.IconContent("d_UnityEditor.ConsoleWindow").image);
+			noteFinder.Show();
+			noteFinder.ScanAllFiles();
 		}
 		#endregion
 
@@ -92,8 +93,6 @@
 				menuBar = new MenuBar(this);
 			}
 
-			directory = new DirectoryInfo(Application.dataPath);
-
 			watcher = new FileSystemWatcher(Application.dataPath, fileExtension);
 			watcher.Created += OnCreated;
 			watcher.Changed += OnChanged;
@@ -105,8 +104,6 @@
 
 			Undo.undoRedoPerformed -= Repaint;
 			Undo.undoRedoPerformed += Repaint;
-
-			ScanAllFiles();
 		}
 
 		private void OnCreated(object obj, FileSystemEventArgs e)
@@ -132,25 +129,24 @@
 
 		public void Draw()
 		{
-			if(noteListCollection == null)
+			if(noteListCollection.NoteLists == null)
 			{
 				GUILayout.Label("No Notes loaded", EditorStyles.centeredGreyMiniLabel);
 				return;
 			}
 
 			menuBar.Draw();
-			using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(mainAreaScrollPosition))
+			using(new ScrollViewScope(ref mainAreaScrollPosition))
 			{
-				mainAreaScrollPosition = scrollViewScrope.scrollPosition;
 				noteListCollection.Draw(menuBar.SearchString);
 			}
 		}
 
 		public void ScanAllFiles()
 		{
-			foreach(FileInfo file in directory.GetFiles(fileExtension, SearchOption.AllDirectories))
+			foreach(string file in Directory.GetFiles(Application.dataPath, fileExtension, SearchOption.AllDirectories))
 			{
-				ScanFile(file.FullName);
+				ScanFile(file);
 			}
 		}
 
@@ -163,7 +159,6 @@
 
 			string relativePath = GetRelativePath(filePath);
 			noteListCollection.NoteLists.RemoveAll(noteList => noteList.RelativePath == relativePath);
-			Debug.Log(noteListCollection.NoteLists.Count);
 			noteListCollection.NoteLists.Add(NoteList.Parse(filePath, relativePath, tagList.Tags));
 		}
 

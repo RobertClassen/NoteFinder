@@ -6,7 +6,7 @@
 	using UnityEditor;
 	using UnityEngine;
 
-	public struct PropertyScope : IDisposable
+	internal struct PropertyScope : IDisposable
 	{
 		#region Fields
 

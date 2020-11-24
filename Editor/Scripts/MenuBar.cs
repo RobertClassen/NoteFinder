@@ -31,7 +31,7 @@
 		#region Methods
 		public void Draw()
 		{
-			using(new GUILayout.HorizontalScope(EditorStyles.toolbar))
+			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, EditorStyles.toolbar))
 			{
 				if(GUILayout.Button("Scan", EditorStyles.toolbarButton))
 				{
@@ -44,14 +44,13 @@
 				}
 
 				GUILayout.FlexibleSpace();
-				searchString = SearchField.Draw(searchString, noteFinder.Repaint);
+				SearchField.Draw(ref searchString, noteFinder.Repaint);
 			}
 		}
 
 		private void DrawTagMenu(NoteFinder noteFinder)
 		{
 			GenericMenu menu = new GenericMenu();
-
 			foreach(Tag tag in noteFinder.TagList.Tags)
 			{
 				menu.AddItem(string.Format("{0} ({1})", tag.Name, noteFinder.NoteListCollection.GetTagCount(tag)), 

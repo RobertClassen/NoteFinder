@@ -7,6 +7,7 @@
 	using UnityEngine;
 
 	[CreateAssetMenu(menuName = "NoteFinder/TagList")]
+	[Serializable]
 	public class TagList : ScriptableObject, IDrawable
 	{
 		#region Fields
@@ -31,13 +32,11 @@
 		public void Draw()
 		{
 			GUILayout.Label("Tags");
-			using(GUILayout.ScrollViewScope scrollViewScrope = new GUILayout.ScrollViewScope(scrollPosition))
+			using(new ScrollViewScope(ref scrollPosition))
 			{
-				scrollPosition = scrollViewScrope.scrollPosition;
-
 				for(int i = 0; i < tags.Count; i++)
 				{
-					using(new GUILayout.HorizontalScope(GUI.skin.box))
+					using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, GUI.skin.box))
 					{
 						tags[i].Draw(this);
 						GUILayout.FlexibleSpace();
@@ -53,7 +52,7 @@
 
 		private void DrawAddTagField()
 		{
-			using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
+			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, EditorStyles.helpBox))
 			{
 				newTagName = EditorGUILayout.TextField(newTagName);
 				if(GUILayout.Button("Add", GUILayout.ExpandWidth(false)))

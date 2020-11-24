@@ -6,7 +6,7 @@
 	using UnityEditor;
 	using UnityEngine;
 
-	public struct GUIColorScope : IDisposable
+	internal struct GUIColorScope : IDisposable
 	{
 		#region Fields
 		private Color color;

@@ -6,7 +6,7 @@
 	using UnityEditor;
 	using UnityEngine;
 
-	public static class SearchField
+	internal static class SearchField
 	{
 		#region Constants
 		private const string endCap = "ToolbarSeachCancelButtonEmpty";
@@ -26,17 +26,16 @@
 		#endregion
 
 		#region Methods
-		public static string Draw(string searchString, Action onClear, float maxWidth = 300f)
+		public static void Draw(ref string searchString, Action onClear, float maxWidth = 300f)
 		{
 			searchString = GUILayout.TextField(searchString, EditorStyles.toolbarSearchField, GUILayout.MaxWidth(maxWidth));
 			if(DrawEndCap(searchString) || IsEscapePressed())
 			{
-				GUI.FocusControl(null);
-				onClear.Invoke();
-				GUIUtility.ExitGUI();
 				searchString = string.Empty;
+				GUI.FocusControl(null);
+				onClear?.Invoke();
+				GUIUtility.ExitGUI();
 			}
-			return searchString;
 		}
 
 		private static bool DrawEndCap(string searchString)

@@ -25,6 +25,9 @@
 		
 		[SerializeField]
 		private GUIContent lineButtonContent = null;
+
+		[NonSerialized]
+		private GUIStyle textStyle = null;
 		#endregion
 
 		#region Properties
@@ -36,6 +39,15 @@
 
 		public string Text
 		{ get { return text; } }
+
+		private GUIStyle TextStyle
+		{
+			get
+			{
+				textStyle = textStyle ?? new GUIStyle(EditorStyles.label) { wordWrap = true };
+				return textStyle;
+			}
+		}
 		#endregion
 
 		#region Constructors
@@ -57,7 +69,7 @@
 				return;
 			}
 
-			using(new GUILayout.HorizontalScope(EditorStyles.helpBox))
+			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, EditorStyles.helpBox))
 			{
 				if(GUILayout.Button(lineButtonContent, buttonWidth))
 				{
@@ -68,8 +80,7 @@
 					GUILayout.Label(tag.Name, EditorStyles.helpBox, tagWidth);
 				}
 
-				GUIStyle textStyle = new GUIStyle(EditorStyles.label){ wordWrap = true };
-				GUILayout.Label(text, textStyle);
+				GUILayout.Label(text, TextStyle);
 			}
 		}
 		#endregion

@@ -5,7 +5,7 @@
 	using System.Collections.Generic;
 	using UnityEngine;
 
-	public static class RectExtensions
+	internal static class RectExtensions
 	{
 		#region Fields
 		
@@ -20,6 +20,26 @@
 		#endregion
 
 		#region Methods
+		public static Rect SetPosition(this Rect rect, Vector2 size)
+		{
+			return new Rect(rect.position, size);
+		}
+
+		public static Rect SetPosition(this Rect rect, float x, float y)
+		{
+			return rect.SetSize(new Vector2(x, y));
+		}
+
+		public static Rect SetX(this Rect rect, float x)
+		{
+			return rect.SetPosition(x, rect.y);
+		}
+
+		public static Rect SetY(this Rect rect, float y)
+		{
+			return rect.SetPosition(rect.x, y);
+		}
+
 		public static Rect SetSize(this Rect rect, Vector2 size)
 		{
 			return new Rect(rect.position, size);
@@ -32,12 +52,12 @@
 
 		public static Rect SetWidth(this Rect rect, float width)
 		{
-			return new Rect(rect.x, rect.y, width, rect.height);
+			return rect.SetSize(width, rect.height);
 		}
 
-		public static Rect SetX(this Rect rect, float x)
+		public static Rect SetHeight(this Rect rect, float height)
 		{
-			return new Rect(x, rect.y, rect.width, rect.height);
+			return rect.SetSize(rect.width, height);
 		}
 		#endregion
 	}

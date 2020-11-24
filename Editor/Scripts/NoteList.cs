@@ -54,7 +54,15 @@
 
 		private static int GetLine(string text, int index)
 		{
-			return text.Take(index).Count(c => c == '\n') + 1;
+			int line = 1;
+			for(int i = 0; i < index; i++)
+			{
+				if(text[i] == '\n')
+				{
+					line++;
+				}
+			}
+			return line;
 		}
 
 		public void Draw(string searchString)
@@ -65,10 +73,10 @@
 				return;
 			}
 
-			using(new GUILayout.HorizontalScope())
+			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal))
 			{
 				GUILayout.Space(EditorGUIUtility.singleLineHeight);
-				using(new GUILayout.VerticalScope())
+				using(new LayoutGroup.Scope(LayoutGroup.Direction.Vertical))
 				{
 					foreach(Note note in notes)
 					{
