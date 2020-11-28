@@ -16,6 +16,11 @@
 		private string searchString = string.Empty;
 		[SerializeField]
 		private string lowerSearchString = string.Empty;
+
+		[SerializeField]
+		private Rect rect;
+		[SerializeField]
+		private Rect tagMenuRect;
 		#endregion
 
 		#region Properties
@@ -40,28 +45,36 @@
 					noteFinder.ScanAllFiles();
 				}
 
-				if(GUILayout.Button("Tags", EditorStyles.toolbarButton))
-				{
-					DrawTagMenu();
-				}
+				DrawTagMenu();
 
 				GUILayout.FlexibleSpace();
 				SearchField.Draw(ref searchString, noteFinder.Repaint);
 				lowerSearchString = searchString.ToLowerInvariant();
 			}
+
+			rect = GUILayoutUtility.GetLastRect();
 		}
 
 		private void DrawTagMenu()
 		{
-			GenericMenu menu = new GenericMenu();
-			foreach(Tag tag in noteFinder.TagList.Tags)
+			if(GUILayout.Button("Tags", EditorStyles.toolbarButton))
 			{
-				menu.AddItem(string.Format("{0} ({1})", tag.Name, noteFinder.NoteListCollection.GetTagCount(tag)), 
-					tag.IsEnabled, tag.Toggle);
+				GenericMenu menu = new GenericMenu();
+				foreach(Tag tag in noteFinder.TagList.Tags)
+				{
+					menu.AddItem(string.Format("{0} ({1})", tag.Name, noteFinder.NoteListCollection.GetTagCount(tag)), 
+						tag.IsEnabled, tag.Toggle);
+				}
+				menu.AddSeparator();
+				menu.AddItem("Edit...", false, () => noteFinder.IDrawable = noteFinder.TagList);
+				menu.DropDown(rect, tagMenuRect);
 			}
-			menu.AddSeparator();
-			menu.AddItem("Edit...", false, () => noteFinder.IDrawable = noteFinder.TagList);
-			menu.ShowAsContext();
+
+			if(Event.current.type == EventType.Layout || Event.current.type == EventType.Used)
+			{
+				return;
+			}
+			tagMenuRect = GUILayoutUtility.GetLastRect();
 		}
 
 		public void SetFilter(string filter)
