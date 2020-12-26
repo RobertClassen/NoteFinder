@@ -38,7 +38,7 @@
 				{
 					using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, GUI.skin.box))
 					{
-						tags[i].Draw(this);
+						tags[i].DrawSettings(this);
 						GUILayout.FlexibleSpace();
 						if(GUILayout.Button("-"))
 						{

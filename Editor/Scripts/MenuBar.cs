@@ -40,9 +40,9 @@
 		{
 			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, EditorStyles.toolbar))
 			{
-				if(GUILayout.Button("Scan", EditorStyles.toolbarButton))
+				if(GUILayout.Button("Update", EditorStyles.toolbarButton))
 				{
-					noteFinder.ScanAllFiles();
+					noteFinder.ParseAll();
 				}
 
 				DrawTagMenu();
@@ -60,9 +60,10 @@
 			if(GUILayout.Button("Tags", EditorStyles.toolbarButton))
 			{
 				GenericMenu menu = new GenericMenu();
-				foreach(Tag tag in noteFinder.TagList.Tags)
+				for(int i = 0; i < noteFinder.TagList.Tags.Count; i++)
 				{
-					menu.AddItem(string.Format("{0} ({1})", tag.Name, noteFinder.NoteListCollection.GetTagCount(tag)), 
+					Tag tag = noteFinder.TagList.Tags[i];
+					menu.AddItem(string.Format("{0} ({1})", tag.Name, noteFinder.GetTagCount(i)), 
 						tag.IsEnabled, tag.Toggle);
 				}
 				menu.AddSeparator();

@@ -10,13 +10,18 @@
 	using UnityEditorInternal;
 	using UnityEngine;
 
+	/// <summary>
+	/// Contains all <see cref="Note"/>s of a single script file.
+	/// </summary>
 	[Serializable]
-	public class NoteList
+	public class NoteList : IComparable<NoteList>
 	{
 		#region Constants
-		private static readonly GUIContent filterButtonContent = EditorGUIUtility.TrIconContent("FilterByLabel", "Filter");
-		private static readonly GUILayoutOption filterButtonWidth = GUILayout.Width(EditorGUIUtility.singleLineHeight);
-		private static readonly GUILayoutOption filterButtonHeight = GUILayout.Height(EditorGUIUtility.singleLineHeight);
+		/// <summary>
+		/// Used instead of <see cref="Environment.NewLine"/> 
+		/// because script files do not necessarily use the correct line endings depending on the current platform.
+		/// </summary>
+		private const char newLine = '\n';
 		#endregion
 
 		#region Fields
@@ -24,6 +29,11 @@
 		private string relativePath = null;
 		[SerializeField]
 		private string lowerRelativePath = null;
+
+		[SerializeField]
+		private GUIContent[] relativeDirectoryContents = null;
+		[SerializeField]
+		private int[] relativePathHashes = null;
 		[SerializeField]
 		private bool isExpanded = true;
 		[SerializeField]
@@ -32,22 +42,38 @@
 		[SerializeField]
 		private string foldoutTitle = null;
 
-		private static GUIStyle filterButtonStyle = null;
+		private static Texture folderIcon = null;
+		private static Texture scriptFileIcon = null;
 		#endregion
 
 		#region Properties
 		public string RelativePath
 		{ get { return relativePath; } }
 
+		public GUIContent[] RelativeDirectoryContents
+		{ get { return relativeDirectoryContents; } }
+
+		public int[] RelativePathHashes
+		{ get { return relativePathHashes; } }
+
 		public List<Note> Notes
 		{ get { return notes; } }
 
-		private static GUIStyle FilterButtonStyle
+		public static Texture FolderIcon
 		{
 			get
 			{
-				filterButtonStyle = filterButtonStyle ?? new GUIStyle(GUI.skin.button) { padding = new RectOffset() };
-				return filterButtonStyle;
+				folderIcon = folderIcon ?? EditorGUIUtility.IconContent("Folder Icon").image;
+				return folderIcon;
+			}
+		}
+
+		public static Texture ScriptFileIcon
+		{
+			get
+			{
+				scriptFileIcon = scriptFileIcon ?? EditorGUIUtility.IconContent("cs Script Icon").image;
+				return scriptFileIcon;
 			}
 		}
 		#endregion
@@ -59,19 +85,37 @@
 			lowerRelativePath = relativePath.ToLowerInvariant();
 			this.notes = notes;
 			foldoutTitle = string.Format("{0} ({1})", relativePath, notes.Count);
+
+			string[] relativeDirectoryNames = relativePath.Split(Path.DirectorySeparatorChar);
+			relativeDirectoryContents = new GUIContent[relativeDirectoryNames.Length];
+			relativePathHashes = new int[relativeDirectoryNames.Length];
+			string combinedPath;
+			for(int i = 0; i < relativeDirectoryNames.Length; i++)
+			{
+				relativeDirectoryContents[i] = new GUIContent(relativeDirectoryNames[i], 
+					i < relativeDirectoryNames.Length - 1 ? FolderIcon : ScriptFileIcon);
+				combinedPath = i == 0 ? relativeDirectoryNames[i] : string.Format("{0}{1}{2}", 
+					relativeDirectoryNames[i - 1], Path.DirectorySeparatorChar, relativeDirectoryNames[i]);
+				relativePathHashes[i] = combinedPath.GetHashCode();
+			}
 		}
 		#endregion
 
 		#region Methods
 		public static NoteList Parse(string filePath, string relativePath, List<Tag> tags)
 		{
+			if(!File.Exists(filePath))
+			{
+				return null;
+			}
+
 			string text = File.ReadAllText(filePath);
 			List<Note> notes = new List<Note>();
-			foreach(Tag tag in tags)
+			for(int i = 0; i < tags.Count; i++)
 			{
-				notes.AddRange(Regex.Matches(text, string.Format(@"(?<=\W|^)\/\/(\s?(?i){0}(?-i))(:?)(.*)", tag.Name))
+				notes.AddRange(Regex.Matches(text, string.Format(@"(?<=\W|^)\/\/(\s?(?i){0}(?-i))(:?)(.*)", tags[i].Name))
 					.Cast<Match>()
-					.Select(match => new Note(GetLine(text, match.Index), tag, match.Groups[3].Value.Trim())));
+					.Select(match => new Note(GetLine(text, match.Index), i, match.Groups[3].Value.Trim())));
 			}
 			return new NoteList(relativePath, notes.OrderBy(note => note.Line).ToList());
 		}
@@ -81,7 +125,7 @@
 			int line = 1;
 			for(int i = 0; i < index; i++)
 			{
-				if(text[i] == '\n')
+				if(text[i] == newLine)
 				{
 					line++;
 				}
@@ -89,7 +133,7 @@
 			return line;
 		}
 
-		public void Draw(string searchString, Action<string> onFilter)
+		public void Draw(string searchString, int indentation, TagList tagList)
 		{
 			if(notes.Count == 0)
 			{
@@ -103,14 +147,6 @@
 				return;
 			}
 
-			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal))
-			{
-				isExpanded = EditorGUILayout.Foldout(isExpanded, foldoutTitle, true);
-				if(GUILayout.Button(filterButtonContent, FilterButtonStyle, filterButtonWidth, filterButtonHeight))
-				{
-					onFilter?.Invoke(relativePath);
-				}
-			}
 			if(!isExpanded)
 			{
 				return;
@@ -118,7 +154,7 @@
 
 			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal))
 			{
-				GUILayout.Space(EditorGUIUtility.singleLineHeight);
+				GUILayout.Space(EditorGUIUtility.singleLineHeight * indentation);
 				using(new LayoutGroup.Scope(LayoutGroup.Direction.Vertical))
 				{
 					foreach(Note note in notes)
@@ -128,7 +164,7 @@
 							continue;
 						}
 
-						note.Draw(this);
+						note.Draw(this, tagList.Tags[note.TagIndex]);
 					}
 				}
 			}
@@ -136,12 +172,18 @@
 
 		public void OpenScript(int line)
 		{
-			InternalEditorUtility.OpenFileAtLineExternal(GetFullPath(relativePath), line);
+			InternalEditorUtility.OpenFileAtLineExternal(GetFullPath(), line);
 		}
 
-		private static string GetFullPath(string relativePath)
+		public string GetFullPath()
 		{
-			return Path.Combine(Directory.GetParent(Application.dataPath).FullName, relativePath);
+			return Path.Combine(Application.dataPath, relativePath)
+				.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+		}
+
+		public int CompareTo(NoteList other)
+		{
+			return relativePath.CompareTo(other.relativePath);
 		}
 		#endregion
 	}

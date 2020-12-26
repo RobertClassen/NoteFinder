@@ -9,6 +9,10 @@
 	[Serializable]
 	public class Tag
 	{
+		#region Constants
+		private static readonly GUIStyle style = new GUIStyle(EditorStyles.helpBox);
+		#endregion
+
 		#region Fields
 		[SerializeField]
 		private string name = null;
@@ -16,6 +20,8 @@
 		private bool isEnabled = true;
 		[SerializeField]
 		private Color color = Color.white;
+		[SerializeField]
+		private GUILayoutOption width = null;
 		#endregion
 
 		#region Properties
@@ -25,8 +31,15 @@
 		public bool IsEnabled
 		{ get { return isEnabled; } }
 
-		public Color Color
-		{ get { return color; } }
+		public GUILayoutOption Width
+		{
+			get
+			{
+				width = width ?? GUILayout.Width(style.CalcSize(new GUIContent(name)).x + 1f);
+				return width;
+			}
+		}
+
 		#endregion
 
 		#region Constructors
@@ -37,7 +50,21 @@
 		#endregion
 
 		#region Methods
-		public void Draw(TagList tagList)
+		public void Draw()
+		{
+			using(new GUIColorScope(color))
+			{
+				GUILayout.Label(name, style, Width);
+			}
+		}
+
+		public void DrawSettings(TagList tagList)
+		{
+			DrawNameField(tagList);
+			DrawColorField(tagList);
+		}
+
+		private void DrawNameField(TagList tagList)
 		{
 			string newName = GUILayout.TextField(name, GUILayout.Width(100f));
 			if(newName != name)
@@ -46,6 +73,10 @@
 				name = newName;
 				EditorUtility.SetDirty(tagList);
 			}
+		}
+
+		private void DrawColorField(TagList tagList)
+		{
 			Color newColor = EditorGUILayout.ColorField(color);
 			if(newColor != color)
 			{

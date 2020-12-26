@@ -10,16 +10,14 @@
 	public class Note
 	{
 		#region Constants
-		private static readonly GUILayoutOption buttonWidth = GUILayout.Width(50f);
-		private static readonly GUILayoutOption tagWidth = GUILayout.Width(50f);
-		private static readonly GUILayoutOption tagHeight = GUILayout.Height(EditorGUIUtility.singleLineHeight);
+		private static readonly GUILayoutOption lineButtonWidth = GUILayout.Width(50f);
 		#endregion
 
 		#region Fields
 		[SerializeField]
 		private int line = 0;
 		[SerializeField]
-		private Tag tag = null;
+		private int tagIndex = 0;
 		[SerializeField]
 		private string text = null;
 		[SerializeField]
@@ -36,8 +34,8 @@
 		public int Line
 		{ get { return line; } }
 
-		public Tag Tag
-		{ get { return tag; } }
+		public int TagIndex
+		{ get { return tagIndex; } }
 
 		public string Text
 		{ get { return text; } }
@@ -56,10 +54,10 @@
 		#endregion
 
 		#region Constructors
-		public Note(int line, Tag tag, string text)
+		public Note(int line, int tagIndex, string text)
 		{
 			this.line = line;
-			this.tag = tag;
+			this.tagIndex = tagIndex;
 			this.text = text;
 			lowerText = text.ToLowerInvariant();
 
@@ -68,7 +66,7 @@
 		#endregion
 
 		#region Methods
-		public void Draw(NoteList noteList)
+		public void Draw(NoteList noteList, Tag tag)
 		{
 			if(!tag.IsEnabled)
 			{
@@ -77,14 +75,11 @@
 
 			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, GUI.skin.box))
 			{
-				if(GUILayout.Button(lineButtonContent, buttonWidth))
+				if(GUILayout.Button(lineButtonContent, lineButtonWidth))
 				{
 					noteList.OpenScript(line);
 				}
-				using(new GUIColorScope(tag.Color))
-				{
-					GUILayout.Label(tag.Name, EditorStyles.helpBox, tagWidth);
-				}
+				tag.Draw();
 
 				GUILayout.Label(text, TextStyle);
 			}
