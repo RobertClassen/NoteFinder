@@ -99,11 +99,7 @@
 
 		private void Initialize()
 		{
-			TagList[] tagLists = Resources.FindObjectsOfTypeAll<TagList>();
-			if(tagLists?.Length > 0)
-			{
-				tagList = tagLists[0];
-			}
+			tagList = Resources.Load<TagList>("TagList");
 
 			if(menuBar == null)
 			{
