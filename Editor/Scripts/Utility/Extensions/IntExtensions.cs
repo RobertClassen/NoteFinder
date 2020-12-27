@@ -5,7 +5,7 @@
 	using System.Collections.Generic;
 	using UnityEngine;
 
-	public static class StringExtensions
+	internal static class IntExtensions
 	{
 		#region Fields
 		
@@ -20,9 +20,9 @@
 		#endregion
 
 		#region Methods
-		public static string[] Split(this string text, char separator)
+		public static bool IsClamped(this int value, int min, int max, bool isInclusive = true)
 		{
-			return text.Split(new[]{ separator }, StringSplitOptions.RemoveEmptyEntries);
+			return isInclusive ? min <= value && value <= max : min < value && value < max;
 		}
 		#endregion
 	}

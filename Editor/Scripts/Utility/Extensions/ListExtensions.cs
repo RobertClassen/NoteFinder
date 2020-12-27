@@ -5,7 +5,7 @@
 	using System.Collections.Generic;
 	using UnityEngine;
 
-	public static class ListExtensions
+	internal static class ListExtensions
 	{
 		#region Fields
 		
