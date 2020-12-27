@@ -31,51 +31,23 @@
 		private string lowerRelativePath = null;
 
 		[SerializeField]
-		private GUIContent[] relativeDirectoryContents = null;
-		[SerializeField]
-		private int[] relativePathHashes = null;
-		[SerializeField]
-		private bool isExpanded = true;
+		private FoldoutInfo[] foldoutInfos = null;
 		[SerializeField]
 		private List<Note> notes = new List<Note>();
 
 		[SerializeField]
 		private string foldoutTitle = null;
-
-		private static Texture folderIcon = null;
-		private static Texture scriptFileIcon = null;
 		#endregion
 
 		#region Properties
 		public string RelativePath
 		{ get { return relativePath; } }
 
-		public GUIContent[] RelativeDirectoryContents
-		{ get { return relativeDirectoryContents; } }
-
-		public int[] RelativePathHashes
-		{ get { return relativePathHashes; } }
+		public FoldoutInfo[] FoldoutInfos
+		{ get { return foldoutInfos; } }
 
 		public List<Note> Notes
 		{ get { return notes; } }
-
-		public static Texture FolderIcon
-		{
-			get
-			{
-				folderIcon = folderIcon ?? EditorGUIUtility.IconContent("Folder Icon").image;
-				return folderIcon;
-			}
-		}
-
-		public static Texture ScriptFileIcon
-		{
-			get
-			{
-				scriptFileIcon = scriptFileIcon ?? EditorGUIUtility.IconContent("cs Script Icon").image;
-				return scriptFileIcon;
-			}
-		}
 		#endregion
 
 		#region Constructors
@@ -86,17 +58,18 @@
 			this.notes = notes;
 			foldoutTitle = string.Format("{0} ({1})", relativePath, notes.Count);
 
-			string[] relativeDirectoryNames = relativePath.Split(Path.DirectorySeparatorChar);
-			relativeDirectoryContents = new GUIContent[relativeDirectoryNames.Length];
-			relativePathHashes = new int[relativeDirectoryNames.Length];
-			string combinedPath;
-			for(int i = 0; i < relativeDirectoryNames.Length; i++)
+			string[] relativePathNames = relativePath.Split(Path.DirectorySeparatorChar);
+			int count = relativePathNames.Length;
+			foldoutInfos = new FoldoutInfo[count];
+			string combinedPath = relativePathNames[0];
+			for(int i = 0; i < count; i++)
 			{
-				relativeDirectoryContents[i] = new GUIContent(relativeDirectoryNames[i], 
-					i < relativeDirectoryNames.Length - 1 ? FolderIcon : ScriptFileIcon);
-				combinedPath = i == 0 ? relativeDirectoryNames[i] : string.Format("{0}{1}{2}", 
-					relativeDirectoryNames[i - 1], Path.DirectorySeparatorChar, relativeDirectoryNames[i]);
-				relativePathHashes[i] = combinedPath.GetHashCode();
+				if(i > 0)
+				{
+					combinedPath = string.Format("{0}{1}{2}", combinedPath, Path.DirectorySeparatorChar, relativePathNames[i]);
+				}
+
+				foldoutInfos[i] = new FoldoutInfo(combinedPath.GetHashCode(), relativePathNames[i], i < count - 1);
 			}
 		}
 		#endregion
@@ -133,6 +106,11 @@
 			return line;
 		}
 
+		public GUIContent GetLabel(bool isExpanded, int depth)
+		{
+			return foldoutInfos[depth].GetLabel(isExpanded);
+		}
+
 		public void Draw(string searchString, int indentation, TagList tagList)
 		{
 			if(notes.Count == 0)
@@ -143,11 +121,6 @@
 			bool isFiltered = !string.IsNullOrEmpty(searchString);
 			bool isSearched = isFiltered && lowerRelativePath.Contains(searchString);
 			if(!(isSearched || notes.Any(note => note.LowerText.Contains(searchString))))
-			{
-				return;
-			}
-
-			if(!isExpanded)
 			{
 				return;
 			}

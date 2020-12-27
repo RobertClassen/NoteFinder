@@ -68,7 +68,6 @@
 			NoteFinder noteFinder = GetWindow<NoteFinder>();
 			noteFinder.minSize = new Vector2(250f, 250f);
 			noteFinder.wantsMouseMove = true;
-			noteFinder.titleContent = EditorGUIUtility.TrTextContentWithIcon("Notes", "d_UnityEditor.ConsoleWindow");
 			noteFinder.Initialize();
 			noteFinder.Show();
 			noteFinder.ParseAll();
@@ -99,6 +98,7 @@
 
 		private void Initialize()
 		{
+			titleContent = EditorGUIUtility.TrTextContentWithIcon("Notes", "UnityEditor.ConsoleWindow");
 			tagList = Resources.Load<TagList>("TagList");
 
 			if(menuBar == null)
@@ -108,10 +108,10 @@
 
 			watcher = new FileSystemWatcher(Application.dataPath, fileExtension);
 			watcher.NotifyFilter = notifyFilters;
-			watcher.Created += QueueFileUpdate;
-			watcher.Changed += QueueFileUpdate;
-			watcher.Renamed += QueueFileUpdate;
-			watcher.Deleted += QueueFileUpdate;
+			watcher.Created += EnqueueFileParse;
+			watcher.Changed += EnqueueFileParse;
+			watcher.Renamed += EnqueueFileParse;
+			watcher.Deleted += EnqueueFileParse;
 			watcher.EnableRaisingEvents = true;
 			watcher.IncludeSubdirectories = true;
 
@@ -124,7 +124,7 @@
 			highlightButtonContent = EditorGUIUtility.TrIconContent("cs Script Icon", "Show file");
 		}
 
-		private void QueueFileUpdate(object obj, FileSystemEventArgs e)
+		private void EnqueueFileParse(object obj, FileSystemEventArgs e)
 		{
 			EditorApplication.delayCall += () => Parse(e.FullPath);
 		}
@@ -209,7 +209,7 @@
 				return;
 			}
 
-			for(int i = depth; i < noteList.RelativePathHashes.Length; i++)
+			for(int i = depth; i < noteList.FoldoutInfos.Length; i++)
 			{
 				isExpanded = DrawFoldout(noteList, i);
 				if(!isExpanded)
@@ -220,7 +220,7 @@
 
 			if(isExpanded)
 			{
-				noteList.Draw(menuBar.LowerSearchString, noteList.RelativePathHashes.Length, tagList);
+				noteList.Draw(menuBar.SearchField.LowerText, noteList.FoldoutInfos.Length, tagList);
 			}
 		}
 
@@ -232,10 +232,10 @@
 			}
 
 			int minHierarchyDepth = 0;
-			for(int i = 0; i < noteList.RelativePathHashes.Length; i++)
+			for(int i = 0; i < noteList.FoldoutInfos.Length; i++)
 			{
-				if(previousNoteList.RelativePathHashes.Length <= i ||
-				   noteList.RelativePathHashes[i] != previousNoteList.RelativePathHashes[i])
+				if(previousNoteList.FoldoutInfos.Length <= i ||
+				   noteList.FoldoutInfos[i].Hash != previousNoteList.FoldoutInfos[i].Hash)
 				{
 					break;
 				}
@@ -254,7 +254,7 @@
 			bool isExpanded = false;
 			for(int depth = 0; depth < maxDepth; depth++)
 			{
-				if(pathExpansionStates.TryGetValue(noteList.RelativePathHashes[depth], out isExpanded))
+				if(pathExpansionStates.TryGetValue(noteList.FoldoutInfos[depth].Hash, out isExpanded))
 				{
 					if(!isExpanded)
 					{
@@ -263,7 +263,7 @@
 				}
 				else
 				{
-					pathExpansionStates[noteList.RelativePathHashes[depth]] = defaultExpansionState;
+					pathExpansionStates[noteList.FoldoutInfos[depth].Hash] = defaultExpansionState;
 					return defaultExpansionState;
 				}
 			}
@@ -273,21 +273,22 @@
 		private bool DrawFoldout(NoteList noteList, int depth)
 		{
 			bool isExpanded;
-			if(!pathExpansionStates.TryGetValue(noteList.RelativePathHashes[depth], out isExpanded))
+			if(!pathExpansionStates.TryGetValue(noteList.FoldoutInfos[depth].Hash, out isExpanded))
 			{
 				isExpanded = defaultExpansionState;
 			}
 			using(new EditorGUILayout.HorizontalScope())
 			{
 				GUILayout.Space(indentWith * depth);
-				isExpanded = EditorGUILayout.Foldout(isExpanded, noteList.RelativeDirectoryContents[depth], true);
-				if(depth == noteList.RelativePathHashes.Length - 1)
+				GUIContent label = noteList.GetLabel(isExpanded, depth);
+				isExpanded = EditorGUILayout.Foldout(isExpanded, label, true);
+				if(depth == noteList.FoldoutInfos.Length - 1)
 				{
 					DrawHighlightButton(noteList);
 				}
-				DrawFilterButton(noteList, depth);
+				DrawFilterButton(label);
 			}
-			pathExpansionStates[noteList.RelativePathHashes[depth]] = isExpanded;
+			pathExpansionStates[noteList.FoldoutInfos[depth].Hash] = isExpanded;
 			return isExpanded;
 		}
 
@@ -301,11 +302,11 @@
 			}
 		}
 
-		private void DrawFilterButton(NoteList noteList, int depth)
+		private void DrawFilterButton(GUIContent label)
 		{
 			if(GUILayout.Button(filterButtonContent, SmallButtonStyle, smallButtonWidth, smallButtonHeight))
 			{
-				menuBar.SetFilter(noteList.RelativeDirectoryContents[depth].text);
+				menuBar.SetFilter(label.text);
 			}
 		}
 
@@ -329,7 +330,8 @@
 
 		private void SetExpansionStates(bool isExpanded)
 		{
-			foreach(int pathHash in noteLists.SelectMany(noteList => noteList.RelativePathHashes))
+			foreach(int pathHash in noteLists.SelectMany(noteList => noteList.FoldoutInfos
+				.Select(foldoutInfo=>foldoutInfo.Hash)))
 			{
 				pathExpansionStates[pathHash] = isExpanded;
 			}

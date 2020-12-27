@@ -12,10 +12,9 @@
 		#region Fields
 		[SerializeField]
 		private NoteFinder noteFinder = null;
+
 		[SerializeField]
-		private string searchString = string.Empty;
-		[SerializeField]
-		private string lowerSearchString = string.Empty;
+		private SearchField searchField = new SearchField();
 
 		[SerializeField]
 		private Rect rect;
@@ -24,8 +23,8 @@
 		#endregion
 
 		#region Properties
-		public string LowerSearchString
-		{ get { return lowerSearchString; } }
+		public SearchField SearchField
+		{ get { return searchField; } }
 		#endregion
 
 		#region Constructors
@@ -40,19 +39,20 @@
 		{
 			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, EditorStyles.toolbar))
 			{
-				if(GUILayout.Button("Update", EditorStyles.toolbarButton))
-				{
-					noteFinder.ParseAll();
-				}
-
+				DrawUpdateButton();
 				DrawTagMenu();
-
 				GUILayout.FlexibleSpace();
-				SearchField.Draw(ref searchString, noteFinder.Repaint);
-				lowerSearchString = searchString.ToLowerInvariant();
+				SearchField.Draw(noteFinder.Repaint);
 			}
-
 			rect = GUILayoutUtility.GetLastRect();
+		}
+
+		private void DrawUpdateButton()
+		{
+			if(GUILayout.Button("Update", EditorStyles.toolbarButton))
+			{
+				noteFinder.ParseAll();
+			}
 		}
 
 		private void DrawTagMenu()
@@ -80,8 +80,7 @@
 
 		public void SetFilter(string filter)
 		{
-			searchString = filter;
-			lowerSearchString = searchString.ToLowerInvariant();
+			searchField.Text = filter;
 			noteFinder.Repaint();
 		}
 		#endregion

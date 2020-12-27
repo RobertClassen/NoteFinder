@@ -6,7 +6,8 @@
 	using UnityEditor;
 	using UnityEngine;
 
-	internal static class SearchField
+	[Serializable]
+	public class SearchField
 	{
 		#region Constants
 		private const string endCap = "ToolbarSeachCancelButtonEmpty";
@@ -14,11 +15,28 @@
 		#endregion
 
 		#region Fields
-		
+		[SerializeField]
+		private string text = string.Empty;
+		[SerializeField]
+		private string lowerText = string.Empty;
 		#endregion
 
 		#region Properties
-		
+		public string Text
+		{
+			get { return text; }
+			set
+			{
+				if(text != value)
+				{
+					text = value;
+					lowerText = text.ToLowerInvariant();
+				}
+			}
+		}
+
+		public string LowerText
+		{ get { return lowerText; } }
 		#endregion
 
 		#region Constructors
@@ -26,21 +44,22 @@
 		#endregion
 
 		#region Methods
-		public static void Draw(ref string searchString, Action onClear, float maxWidth = 300f)
+		public void Draw(Action onClear, float maxWidth = 300f)
 		{
-			searchString = GUILayout.TextField(searchString, EditorStyles.toolbarSearchField, GUILayout.MaxWidth(maxWidth));
-			if(DrawEndCap(searchString) || IsEscapePressed())
+			bool isEmpty = string.IsNullOrEmpty(text);
+			Text = GUILayout.TextField(text, EditorStyles.toolbarSearchField, GUILayout.MaxWidth(maxWidth));
+			if(DrawEndCap(isEmpty) || IsEscapePressed())
 			{
-				searchString = string.Empty;
+				Text = string.Empty;
 				GUI.FocusControl(null);
 				onClear?.Invoke();
 				GUIUtility.ExitGUI();
 			}
 		}
 
-		private static bool DrawEndCap(string searchString)
+		private static bool DrawEndCap(bool isEmpty)
 		{
-			return GUILayout.Button(string.Empty, string.IsNullOrEmpty(searchString) ? endCap : endCapX);
+			return GUILayout.Button(string.Empty, isEmpty ? endCap : endCapX);
 		}
 
 		private static bool IsEscapePressed()
