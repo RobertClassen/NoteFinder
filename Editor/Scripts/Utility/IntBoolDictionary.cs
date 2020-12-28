@@ -3,32 +3,25 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using UnityEditor;
 	using UnityEngine;
 
-	public struct GUIColorScope : IDisposable
+	[Serializable]
+	public class IntBoolDictionary : SerializableDictionary<int, bool>
 	{
 		#region Fields
-		private Color color;
+		
 		#endregion
 
 		#region Properties
-
+		
 		#endregion
 
 		#region Constructors
-		public GUIColorScope(Color color)
-		{
-			this.color = GUI.color;
-			GUI.color = color;
-		}
+		
 		#endregion
 
 		#region Methods
-		public void Dispose()
-		{
-			GUI.color = color;
-		}
+		
 		#endregion
 	}
 }

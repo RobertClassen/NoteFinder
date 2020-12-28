@@ -21,14 +21,8 @@
 		#endregion
 
 		#region Methods
-		public static void AddItem(this GenericMenu genericMenu, string content, bool isTicked, 
-		                           GenericMenu.MenuFunction func, bool isEnabled = true)
-		{
-			AddItem(genericMenu, new GUIContent(content), isTicked, func, isEnabled);
-		}
-
 		public static void AddItem(this GenericMenu genericMenu, GUIContent content, bool isTicked, 
-		                           GenericMenu.MenuFunction func, bool isEnabled = true)
+			GenericMenu.MenuFunction func, bool isEnabled = true)
 		{
 			if(isEnabled)
 			{
@@ -41,13 +35,13 @@
 		}
 
 		public static void AddItem(this GenericMenu genericMenu, string content, bool isTicked, 
-		                           GenericMenu.MenuFunction2 func, object userData, bool isEnabled = true)
+			GenericMenu.MenuFunction func, bool isEnabled = true)
 		{
-			AddItem(genericMenu, new GUIContent(content), isTicked, func, userData, isEnabled);
+			AddItem(genericMenu, new GUIContent(content), isTicked, func, isEnabled);
 		}
 
 		public static void AddItem(this GenericMenu genericMenu, GUIContent content, bool isTicked, 
-		                           GenericMenu.MenuFunction2 func, object userData, bool isEnabled = true)
+			GenericMenu.MenuFunction2 func, object userData, bool isEnabled = true)
 		{
 			if(isEnabled)
 			{
@@ -57,6 +51,12 @@
 			{
 				genericMenu.AddDisabledItem(content);
 			}
+		}
+
+		public static void AddItem(this GenericMenu genericMenu, string content, bool isTicked, 
+			GenericMenu.MenuFunction2 func, object userData, bool isEnabled = true)
+		{
+			AddItem(genericMenu, new GUIContent(content), isTicked, func, userData, isEnabled);
 		}
 
 		public static void AddSeparator(this GenericMenu genericMenu)
