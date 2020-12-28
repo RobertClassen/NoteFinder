@@ -1,6 +1,6 @@
 # NoteFinder for Unity
 
-This tool parses script files in a Unity project for certain comment Tags to filter their Notes using this syntax:
+This tool parses script files in a Unity project for certain comment Tags to filter their Notes using this syntax:  
 `//[TAG](:) [DESCRIPTION]`  
 Examples:  
 * "//TODO: implement jump button"
@@ -27,6 +27,9 @@ See [here](https://docs.unity3d.com/Manual/upm-git.html) for how to do so manual
 ### Installation from a local package (alternative)
 See [here](https://docs.unity3d.com/Manual/upm-ui-local.html) for how to install packages from a local folder using the Unity Package Manager.  
 See [here](https://docs.unity3d.com/Manual/upm-localpath.html) for how to do so manually by editing the "manifest.json" file in `[your project folder]/Packages/`.
+
+## Usage
+* Open the NoteFinder window via the `Tools → NoteFinder` menu item
 
 ## Credits
 Based on Denis Sylkin's [ToDoManager](https://github.com/densylkin/ToDoManager) (although by now the code has undergone a 100% rewrite).
