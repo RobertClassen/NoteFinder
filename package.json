@@ -1,0 +1,15 @@
+{
+  "name": "com.robert_classen.notefinder",
+  "version": "1.0.0",
+  "displayName": "NoteFinder",
+  "description": "A simple tool for finding notes in your code.",
+  "unity": "2017.1",
+  "keywords": [
+    "NoteFinder"
+  ],
+  "author": {
+    "name": "Robert Classen",
+    "email": "robert.classen.dev@gmail.com",
+    "url": "https://github.com/RobertClassen/NoteFinder"
+  }
+}
