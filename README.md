@@ -1,8 +1,10 @@
 # NoteFinder for Unity
 
 This tool parses script files in a Unity project for certain comment Tags to filter their Notes using this syntax:
-`//[TAG](:) [DESCRIPTION]`
-E.g. "//TODO: implement jump button" or "//BUG player explodes instead of jumping"
+`//[TAG](:) [DESCRIPTION]`  
+Examples:  
+* "//TODO: implement jump button"
+*  "//BUG player explodes instead of jumping"
 
 ## Features
 * Automatically detects changes to Notes in script files and updates its view (after each assembly reload)
