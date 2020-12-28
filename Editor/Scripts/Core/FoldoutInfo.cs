@@ -16,7 +16,6 @@
 		#else
 		private const string folderOpenedIconName = "FolderEmpty Icon";
 		#endif
-		private const string scriptIconName = "cs Script Icon";
 		#endregion
 
 		#region Fields
@@ -44,7 +43,7 @@
 			}
 			else
 			{
-				labelOpened = label = EditorGUIUtility.TrTextContentWithIcon(displayName, scriptIconName);
+				labelOpened = label = EditorGUIUtility.TrTextContentWithIcon(displayName, NoteFinder.ScriptIconName);
 			}
 		}
 		#endregion

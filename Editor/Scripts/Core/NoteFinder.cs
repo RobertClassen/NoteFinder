@@ -7,15 +7,16 @@
 	using System.Linq;
 	using UnityEditor;
 	using UnityEngine;
+	using FileSystemWatcher = IO.FileSystemWatcher;
 
-	public class NoteFinder : EditorWindow, IDrawable
+	public class NoteFinder : EditorWindow
 	{
 		#region Constants
 		private const string fileExtension = "*.cs";
-		private const NotifyFilters notifyFilters = 
-			NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.Attributes |
-			NotifyFilters.Size | NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.Security;
 		private const bool defaultExpansionState = true;
+		private const string titleIconName = "UnityEditor.ConsoleWindow";
+		public const string ScriptIconName = "cs Script Icon";
+		private const string searchIconName = "Search Icon";
 		private static readonly float indentWith = EditorGUIUtility.singleLineHeight;
 		private static readonly GUILayoutOption smallButtonWidth = GUILayout.Width(indentWith);
 		private static readonly GUILayoutOption smallButtonHeight = GUILayout.Height(indentWith);
@@ -28,7 +29,7 @@
 		[SerializeField]
 		private MenuBar menuBar = null;
 
-		[NonSerialized]
+		[SerializeField]
 		private FileSystemWatcher watcher = null;
 
 		[SerializeField]
@@ -78,6 +79,7 @@
 		void OnEnable()
 		{
 			Initialize();
+			watcher.ValidateFiles(Parse);
 		}
 
 		void OnGUI()
@@ -98,71 +100,40 @@
 
 		private void Initialize()
 		{
-			titleContent = EditorGUIUtility.TrTextContentWithIcon("Notes", "UnityEditor.ConsoleWindow");
+			titleContent = EditorGUIUtility.TrTextContentWithIcon("Notes", titleIconName);
 			tagList = Resources.Load<TagList>("TagList");
 
-			if(menuBar == null)
-			{
-				menuBar = new MenuBar(this);
-			}
-
-			watcher = new FileSystemWatcher(Application.dataPath, fileExtension);
-			watcher.NotifyFilter = notifyFilters;
-			watcher.Created += EnqueueFileParse;
-			watcher.Changed += EnqueueFileParse;
-			watcher.Renamed += EnqueueFileParse;
-			watcher.Deleted += EnqueueFileParse;
-			watcher.EnableRaisingEvents = true;
-			watcher.IncludeSubdirectories = true;
+			watcher = watcher ?? new FileSystemWatcher(Application.dataPath, fileExtension);
+			menuBar = menuBar ?? new MenuBar(this);
 
 			Undo.undoRedoPerformed -= Repaint;
 			Undo.undoRedoPerformed += Repaint;
 
-			// For icon references see https://github.com/halak/unity-editor-icons
-			//filterButtonContent = EditorGUIUtility.TrIconContent("ViewToolZoom", "Filter");
-			filterButtonContent = EditorGUIUtility.TrIconContent("Search Icon", "Filter");
-			highlightButtonContent = EditorGUIUtility.TrIconContent("cs Script Icon", "Show file");
-		}
-
-		private void EnqueueFileParse(object obj, FileSystemEventArgs e)
-		{
-			EditorApplication.delayCall += () => Parse(e.FullPath);
+			filterButtonContent = EditorGUIUtility.TrIconContent(searchIconName, "Filter");
+			highlightButtonContent = EditorGUIUtility.TrIconContent(ScriptIconName, "Show file");
 		}
 
 		public void ParseAll()
 		{
-			ValidateNoteLists();
-			foreach(string file in Directory.GetFiles(Application.dataPath, fileExtension, SearchOption.AllDirectories))
+			foreach(string filePath in Directory.EnumerateFiles(Application.dataPath, fileExtension, SearchOption.AllDirectories))
 			{
-				Parse(file);
-			}
-		}
-
-		/// <summary>
-		/// Removes <see cref="NoteList"/>s of deleted script files. 
-		/// Workaround because the <see cref="FileSystemWatcher.Deleted"/> event is not called correctly.
-		/// </summary>
-		private void ValidateNoteLists()
-		{
-			for(int i = 0; i < noteLists.Count; i++)
-			{
-				if(!File.Exists(noteLists[i].GetFullPath()))
-				{
-					noteLists.RemoveAt(i);
-				}
+				Parse(filePath);
 			}
 		}
 
 		private void Parse(string filePath)
 		{
+			filePath = filePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 			string relativePath = GetRelativePath(filePath);
-			NoteList newNoteList = NoteList.Parse(filePath, relativePath, tagList.Tags);
-			if(newNoteList == null)
+			if(File.Exists(filePath))
 			{
-				ValidateNoteLists();
-				return;
+				noteLists.SetOrAddSorted(noteList => noteList.RelativePath == relativePath, 
+					NoteList.Parse(filePath, relativePath, tagList.Tags));
 			}
-			noteLists.SetOrAddSorted(noteList => noteList.RelativePath == relativePath, newNoteList);
+			else
+			{
+				noteLists.TryRemove(noteList => noteList.RelativePath == relativePath);
+			}
 		}
 
 		private static string GetRelativePath(string path)
@@ -297,8 +268,7 @@
 			if(GUILayout.Button(highlightButtonContent, SmallButtonStyle, smallButtonWidth, smallButtonHeight))
 			{
 				EditorGUIUtility.PingObject(AssetDatabase.LoadAssetAtPath<TextAsset>(
-						string.Format("Assets/{0}", noteList.RelativePath
-						.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))));
+						string.Format("Assets/{0}", noteList.RelativePath)));
 			}
 		}
 

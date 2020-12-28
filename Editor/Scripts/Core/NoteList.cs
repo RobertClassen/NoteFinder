@@ -58,7 +58,7 @@
 			this.notes = notes;
 			foldoutTitle = string.Format("{0} ({1})", relativePath, notes.Count);
 
-			string[] relativePathNames = relativePath.Split(Path.DirectorySeparatorChar);
+			string[] relativePathNames = relativePath.Split(Path.AltDirectorySeparatorChar);
 			int count = relativePathNames.Length;
 			foldoutInfos = new FoldoutInfo[count];
 			string combinedPath = relativePathNames[0];
@@ -66,7 +66,7 @@
 			{
 				if(i > 0)
 				{
-					combinedPath = string.Format("{0}{1}{2}", combinedPath, Path.DirectorySeparatorChar, relativePathNames[i]);
+					combinedPath = string.Format("{0}{1}{2}", combinedPath, Path.AltDirectorySeparatorChar, relativePathNames[i]);
 				}
 
 				foldoutInfos[i] = new FoldoutInfo(combinedPath.GetHashCode(), relativePathNames[i], i < count - 1);
@@ -77,11 +77,6 @@
 		#region Methods
 		public static NoteList Parse(string filePath, string relativePath, List<Tag> tags)
 		{
-			if(!File.Exists(filePath))
-			{
-				return null;
-			}
-
 			string text = File.ReadAllText(filePath);
 			List<Note> notes = new List<Note>();
 			for(int i = 0; i < tags.Count; i++)
@@ -119,25 +114,18 @@
 			}
 
 			bool isFiltered = !string.IsNullOrEmpty(searchString);
-			bool isSearched = isFiltered && lowerRelativePath.Contains(searchString);
-			if(!(isSearched || notes.Any(note => note.LowerText.Contains(searchString))))
-			{
-				return;
-			}
-
+			bool isPathSearched = isFiltered && lowerRelativePath.Contains(searchString);
 			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal))
 			{
 				GUILayout.Space(EditorGUIUtility.singleLineHeight * indentation);
 				using(new LayoutGroup.Scope(LayoutGroup.Direction.Vertical))
 				{
-					foreach(Note note in notes)
+					for(int i = 0; i < notes.Count; i++)
 					{
-						if(!isSearched && isFiltered && !note.Text.Contains(searchString))
+						if(!isFiltered || isPathSearched || notes[i].LowerText.Contains(searchString))
 						{
-							continue;
+							notes[i].Draw(this, tagList.Tags[notes[i].TagIndex]);
 						}
-
-						note.Draw(this, tagList.Tags[note.TagIndex]);
 					}
 				}
 			}

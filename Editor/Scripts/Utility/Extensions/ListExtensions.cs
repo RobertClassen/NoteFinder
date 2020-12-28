@@ -30,6 +30,25 @@
 			list.Insert(index, item);
 		}
 
+		public static void SetOrAddSorted<T>(this List<T> list, Predicate<T> match, T item) where T : IComparable<T>
+		{
+			if(!list.TrySet(match, item))
+			{
+				list.AddSorted(item);
+			}
+		}
+
+		public static bool TryRemove<T>(this List<T> list, Predicate<T> match) where T : IComparable<T>
+		{
+			int index = list.FindIndex(match);
+			if(index >= 0)
+			{
+				list.RemoveAt(index);
+				return true;
+			}
+			return false;
+		}
+
 		public static bool TrySet<T>(this List<T> list, Predicate<T> match, T item) where T : IComparable<T>
 		{
 			int index = list.FindIndex(match);
@@ -39,14 +58,6 @@
 				return true;
 			}
 			return false;
-		}
-
-		public static void SetOrAddSorted<T>(this List<T> list, Predicate<T> match, T item) where T : IComparable<T>
-		{
-			if(!list.TrySet(match, item))
-			{
-				list.AddSorted(item);
-			}
 		}
 		#endregion
 	}

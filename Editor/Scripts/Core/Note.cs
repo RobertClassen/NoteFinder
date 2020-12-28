@@ -37,9 +37,6 @@
 		public int TagIndex
 		{ get { return tagIndex; } }
 
-		public string Text
-		{ get { return text; } }
-
 		public string LowerText
 		{ get { return lowerText; } }
 

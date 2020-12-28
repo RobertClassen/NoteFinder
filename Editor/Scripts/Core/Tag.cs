@@ -9,10 +9,6 @@
 	[Serializable]
 	public class Tag
 	{
-		#region Constants
-		private static readonly GUIStyle style = new GUIStyle(EditorStyles.helpBox);
-		#endregion
-
 		#region Fields
 		[SerializeField]
 		private string name = null;
@@ -20,6 +16,8 @@
 		private bool isEnabled = true;
 		[SerializeField]
 		private Color color = Color.white;
+
+		private static GUIStyle style = null;
 		[SerializeField]
 		private GUILayoutOption width = null;
 		#endregion
@@ -31,15 +29,23 @@
 		public bool IsEnabled
 		{ get { return isEnabled; } }
 
-		public GUILayoutOption Width
+		private static GUIStyle Style
 		{
 			get
 			{
-				width = width ?? GUILayout.Width(style.CalcSize(new GUIContent(name)).x + 1f);
-				return width;
+				style = style ?? new GUIStyle(EditorStyles.helpBox);
+				return style;
 			}
 		}
 
+		private GUILayoutOption Width
+		{
+			get
+			{
+				width = width ?? GUILayout.Width(Style.CalcSize(new GUIContent(name)).x + 1f);
+				return width;
+			}
+		}
 		#endregion
 
 		#region Constructors
@@ -54,7 +60,7 @@
 		{
 			using(new GUIColorScope(color))
 			{
-				GUILayout.Label(name, style, Width);
+				GUILayout.Label(name, Style, Width);
 			}
 		}
 
