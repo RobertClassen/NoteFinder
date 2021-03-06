@@ -41,13 +41,7 @@
 		{ get { return lowerText; } }
 
 		private static GUIStyle TextStyle
-		{
-			get
-			{
-				textStyle = textStyle ?? new GUIStyle(EditorStyles.label) { wordWrap = true };
-				return textStyle;
-			}
-		}
+		{ get { return textStyle ?? (textStyle = new GUIStyle(EditorStyles.label) { wordWrap = true }); } }
 		#endregion
 
 		#region Constructors

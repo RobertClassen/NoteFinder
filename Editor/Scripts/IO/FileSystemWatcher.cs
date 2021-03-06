@@ -25,12 +25,12 @@
 		#endregion
 
 		#region Constructors
-		public FileSystemWatcher(string path, string fileExtension)
+		public FileSystemWatcher(string path, string fileExtension, Action<string> onFileModified)
 		{
 			this.path = path;
 			this.fileExtension = fileExtension;
 
-			AddNewFiles();
+			AddNewFiles(onFileModified);
 		}
 		#endregion
 
@@ -48,7 +48,7 @@
 			}
 		}
 
-		private void AddNewFiles(Action<string> onFileModified = null)
+		private void AddNewFiles(Action<string> onFileModified)
 		{
 			foreach(string filePath in Directory.EnumerateFiles(path, fileExtension, SearchOption.AllDirectories))
 			{

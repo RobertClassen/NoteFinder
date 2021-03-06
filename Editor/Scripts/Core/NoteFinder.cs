@@ -53,13 +53,7 @@
 		{ get { return tagList; } }
 
 		private static GUIStyle SmallButtonStyle
-		{
-			get
-			{
-				smallButtonStyle = smallButtonStyle ?? new GUIStyle(GUI.skin.button) { padding = new RectOffset() };
-				return smallButtonStyle;
-			}
-		}
+		{ get { return smallButtonStyle ?? (smallButtonStyle = new GUIStyle(GUI.skin.button) { padding = new RectOffset() }); } }
 		#endregion
 
 		#region Constructors
@@ -103,7 +97,7 @@
 			titleContent = EditorGUIUtility.TrTextContentWithIcon("Notes", titleIconName);
 			tagList = Resources.Load<TagList>("TagList");
 
-			watcher = watcher ?? new FileSystemWatcher(Application.dataPath, fileExtension);
+			watcher = watcher ?? new FileSystemWatcher(Application.dataPath, fileExtension, Parse);
 			menuBar = menuBar ?? new MenuBar(this);
 
 			Undo.undoRedoPerformed -= Repaint;

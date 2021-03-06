@@ -30,22 +30,10 @@
 		{ get { return isEnabled; } }
 
 		private static GUIStyle Style
-		{
-			get
-			{
-				style = style ?? new GUIStyle(EditorStyles.helpBox);
-				return style;
-			}
-		}
+		{ get { return style ?? (style = new GUIStyle(EditorStyles.helpBox)); } }
 
 		private GUILayoutOption Width
-		{
-			get
-			{
-				width = width ?? GUILayout.Width(Style.CalcSize(new GUIContent(name)).x + 1f);
-				return width;
-			}
-		}
+		{ get { return width ?? (width = GUILayout.Width(Style.CalcSize(new GUIContent(name)).x + 1f)); } }
 		#endregion
 
 		#region Constructors
