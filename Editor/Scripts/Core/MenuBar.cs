@@ -37,7 +37,7 @@
 		#region Methods
 		public void Draw()
 		{
-			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, EditorStyles.toolbar))
+			using(new LayoutGroup.HorizontalScope(EditorStyles.toolbar))
 			{
 				DrawUpdateButton();
 				DrawTagMenu();

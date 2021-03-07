@@ -115,10 +115,10 @@
 
 			bool isFiltered = !string.IsNullOrEmpty(searchString);
 			bool isPathSearched = isFiltered && lowerRelativePath.Contains(searchString);
-			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal))
+			using(new LayoutGroup.HorizontalScope(true))
 			{
 				GUILayout.Space(EditorGUIUtility.singleLineHeight * indentation);
-				using(new LayoutGroup.Scope(LayoutGroup.Direction.Vertical))
+				using(new LayoutGroup.VerticalScope(true))
 				{
 					for(int i = 0; i < notes.Count; i++)
 					{

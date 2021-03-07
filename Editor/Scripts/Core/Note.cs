@@ -64,7 +64,7 @@
 				return;
 			}
 
-			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, GUI.skin.box))
+			using(new LayoutGroup.HorizontalScope(GUI.skin.box))
 			{
 				if(GUILayout.Button(lineButtonContent, lineButtonWidth))
 				{

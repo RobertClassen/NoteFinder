@@ -36,7 +36,7 @@
 			{
 				for(int i = 0; i < tags.Count; i++)
 				{
-					using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, GUI.skin.box))
+					using(new LayoutGroup.HorizontalScope(GUI.skin.box))
 					{
 						tags[i].DrawSettings(this);
 						GUILayout.FlexibleSpace();
@@ -52,7 +52,7 @@
 
 		private void DrawAddTagField()
 		{
-			using(new LayoutGroup.Scope(LayoutGroup.Direction.Horizontal, EditorStyles.helpBox))
+			using(new LayoutGroup.HorizontalScope(EditorStyles.helpBox))
 			{
 				newTagName = EditorGUILayout.TextField(newTagName);
 				if(GUILayout.Button("Add", GUILayout.ExpandWidth(false)))

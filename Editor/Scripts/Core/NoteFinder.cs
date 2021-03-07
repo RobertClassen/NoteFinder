@@ -242,7 +242,7 @@
 			{
 				isExpanded = defaultExpansionState;
 			}
-			using(new EditorGUILayout.HorizontalScope())
+			using(new LayoutGroup.HorizontalScope(true))
 			{
 				GUILayout.Space(indentWith * depth);
 				GUIContent label = noteList.GetLabel(isExpanded, depth);
